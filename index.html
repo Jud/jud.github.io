@@ -25,9 +25,22 @@
       .contact .t { flex: 1; justify-content: flex-start; }
       .contact .g { flex: 1; justify-content: center; }
       .contact .e { flex: 1; justify-content: flex-end; }
+
+      nav { display: flex; justify-content: space-between; align-items: center;
+            width: 500px; margin: 0 auto; padding: 0 0 1rem;
+            border-bottom: 1px solid #ddd; margin-bottom: 1.5rem; }
+      nav .site-name { font-weight: bold; }
+      nav .site-name a { text-decoration: none; color: black; }
+      nav .projects a { margin-left: 1em; }
     </style>
   </head>
   <body>
+    <nav>
+      <span class="site-name"><a href="/">Jud Stephenson</a></span>
+      <span class="projects">
+        Projects: <a href="/mkdn/">mkdn</a>
+      </span>
+    </nav>
     <header>
       <div class="image-crop">
         <img src="jud-stephenson.png" alt="Jud Stephenson">
@@ -39,16 +52,9 @@
       </div>
     </header>
     <section class="main">
-      <h1>Hey 👋, I'm Judson Stephenson &mdash; most folks call me Jud.</h1>
-      <p>I'm a <a href="https://blog.pragmaticengineer.com/the-product-minded-engineer/">Product-minded software engineer</a> who brings ideas to life through well-written code. I love the <em>what</em> &amp; <em>why</em> as much as the <em>how</em>.</p>
-      <p>I currently run <a href="https://airspace.io">Airspace</a> (<a class="no-dec" href="https://airspace.io">✈_</a>), where I help companies execute on their product vision and iterate to find market fit.</p>
-      <p>Previously:</p>
-      <ul>
-        <li>Co-Founder / CTO &mdash; <a href="https://judsonco.com">Judson & Co.</a></li>
-        <li>Co-Founder / CTO &mdash; <a href="https://nybex.com">Nybex, Inc.</a></li>
-        <li>Software Engineer &mdash; <a href="https://ebay.com">eBay, Inc.</a></li>
-        <li>Lead Developer &mdash; <a href="https://svpply.com">Svpply, Inc</a> (Acquired by <a href="http://techcrunch.com/2012/09/06/ebay-acquires-style-focused-social-curated-shopping-site-svpply/">eBay</a>)</li>
-      </ul>
+      <h1>Hey 👋, I'm Judson Stephenson. Most people call me Jud.</h1>
+      <p>We live in an amazing time. So much to build and so many tokens to burn.</p>
+      <p>Most recently I was a Staff Engineer at <a href="https://block.xyz">Block</a> working on <a href="https://bitkey.world">Bitkey</a>. Before that I ran the ad platform at <a href="https://techcrunch.com/2021/02/02/uber-acquires-drizly/">Drizly</a> (acquired by Uber) and a <a href="https://airspace.io">product consultancy</a> helping startups find market fit. I've co-founded a <a href="https://nybex.com">bitcoin exchange</a>, a couple of bitcoin wallets, and a <a href="https://judsonco.com">wholesale distribution platform</a>. Grew up at eBay via <a href="https://techcrunch.com/2012/09/06/ebay-acquires-style-focused-social-curated-shopping-site-svpply/">Svpply</a>.</p>
     </section>
   </body>
 </html>
