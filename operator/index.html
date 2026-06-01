@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Operator — talk to your terminal</title>
+    <meta name="description" content="Voice orchestration for terminal agents. Push to talk, it routes to the right agent and talks back. Fully on-device.">
+    <style>
+      body { margin: 0; padding: 2em 0 4em; font-family: monospace; color: #111;
+             line-height: 1.5; }
+      a { color: #111; }
+      em { font-weight: bold; font-style: normal; }
+
+      nav, header, .main { width: 600px; max-width: calc(100% - 2rem);
+                           margin: 0 auto; }
+      nav { display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 1rem; border-bottom: 1px solid #ddd; margin-bottom: 2.5rem; }
+      nav .site-name { font-weight: bold; }
+      nav a { text-decoration: none; }
+      nav .links a { margin-left: 1em; }
+
+      header { text-align: center; margin-bottom: 2.5rem; }
+      header h1 { font-size: 2.2em; margin: 0; letter-spacing: -0.02em; }
+      header .tagline { font-size: 1.2em; margin: 0.4rem 0 0; }
+      header .sub { color: #555; margin: 0.8rem auto 0; max-width: 460px; }
+
+      .demo { width: 600px; max-width: calc(100% - 2rem); margin: 0 auto 2.5rem;
+              aspect-ratio: 16 / 9; border: 1px solid #ddd; border-radius: 8px;
+              display: flex; align-items: center; justify-content: center;
+              color: #999; background: #fafafa; }
+
+      .main h2 { font-size: 1em; text-transform: uppercase; letter-spacing: 0.08em;
+                 color: #555; margin: 2.5rem 0 0.75rem; }
+      ul { padding-left: 1.2em; margin: 0; }
+      li { margin: 0.35rem 0; }
+
+      code, .cmd { font-family: monospace; }
+      .cmd { display: block; background: #f4f4f4; border: 1px solid #e2e2e2;
+             border-radius: 6px; padding: 0.75rem 1rem; margin: 0.5rem 0; }
+
+      .pricing { border: 1px solid #ddd; border-radius: 8px; padding: 1.25rem 1.5rem;
+                 margin-top: 0.75rem; text-align: center; }
+      .pricing .price { font-size: 1.6em; }
+      .pricing .price small { font-size: 0.55em; color: #555; }
+      .pricing .trial { color: #555; margin: 0.25rem 0 1rem; }
+      .btn { display: inline-block; text-decoration: none; font-weight: bold;
+             border: 1px solid #111; border-radius: 6px; padding: 0.6rem 1.4rem;
+             color: #fff; background: #111; }
+      .btn:hover { background: #333; }
+      .note { color: #777; font-size: 0.85em; margin-top: 0.75rem; }
+
+      footer { width: 600px; max-width: calc(100% - 2rem); margin: 3rem auto 0;
+               padding-top: 1.25rem; border-top: 1px solid #ddd;
+               color: #555; font-size: 0.9em; display: flex;
+               justify-content: space-between; }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <span class="site-name"><a href="https://www.jud.me/">Jud Stephenson</a></span>
+      <span class="links"><a href="https://www.jud.me/">← home</a></span>
+    </nav>
+
+    <header>
+      <h1>Operator</h1>
+      <p class="tagline">Talk to your terminal.</p>
+      <p class="sub">Push a button, say what you want — it routes to the right
+        terminal agent and talks back. Fully on-device.</p>
+    </header>
+
+    <div class="demo">[ 30-second demo video ]</div>
+
+    <section class="main">
+      <h2>What it is</h2>
+      <p>Voice orchestration for terminal agents. Run several Claude Code (or
+        aider, codex, …) sessions at once and just <em>talk</em> — Operator
+        transcribes, figures out which agent you mean, delivers the message, and
+        speaks the reply back in that agent's own voice.</p>
+
+      <h2>Why it's different</h2>
+      <ul>
+        <li><em>Multi-session routing</em> — say "tell sudo to check the mempool" and it lands in the right session.</li>
+        <li><em>Voice in and out</em> — each agent gets its own voice, so you know who's talking.</li>
+        <li><em>Fully on-device</em> — WhisperKit for ears, Kokoro for mouth. No cloud, no API costs, no latency.</li>
+        <li><em>Terminal-native</em> — works with iTerm2 and Ghostty, not a browser tab.</li>
+      </ul>
+
+      <h2>Install</h2>
+      <code class="cmd">brew install --cask operator</code>
+
+      <h2>Pricing</h2>
+      <div class="pricing">
+        <div class="price">$9<small>/mo</small></div>
+        <p class="trial">7-day free trial · cancel anytime</p>
+        <!-- TODO(jud): replace href with your Polar checkout URL once the product exists. -->
+        <a class="btn" href="https://polar.sh/">Start your free trial</a>
+        <p class="note">Agents can always talk back to you for free — even without a subscription.</p>
+      </div>
+    </section>
+
+    <footer>
+      <span>Built by <a href="https://twitter.com/judstephenson">@JudStephenson</a></span>
+      <span><a href="/operator/privacy">Privacy</a></span>
+    </footer>
+  </body>
+</html>
