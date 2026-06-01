@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ve-core: verifiable encryption for key recovery</title>
+    <meta name="description" content="encrypt a key share to a recovery key and prove it decrypts to exactly that share. checked offline, with public data, before any secret is revealed. pure rust.">
+    <style>
+      body { margin: 0; padding: 2em 0 4em; font-family: monospace; color: #111;
+             line-height: 1.5; }
+      a { color: #111; }
+      em { font-weight: bold; font-style: normal; }
+
+      nav, header, .main { width: 600px; max-width: calc(100% - 2rem);
+                           margin: 0 auto; }
+      nav { display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 1rem; border-bottom: 1px solid #ddd; margin-bottom: 2.5rem; }
+      nav .site-name { font-weight: bold; }
+      nav a { text-decoration: none; }
+      nav .links a { margin-left: 1em; }
+
+      header { text-align: center; margin-bottom: 2.5rem; }
+      header h1 { font-size: 2.2em; margin: 0; letter-spacing: -0.02em; }
+      header .tagline { font-size: 1.2em; margin: 0.4rem 0 0; }
+      header .sub { color: #555; margin: 0.8rem auto 0; max-width: 480px; }
+
+      .main h2 { font-size: 1em; letter-spacing: 0.08em; color: #555;
+                 margin: 2.5rem 0 0.75rem; }
+      .main p { margin: 0.75rem 0; }
+      ul { padding-left: 1.2em; margin: 0.5rem 0; }
+      li { margin: 0.5rem 0; }
+
+      code { font-family: monospace; }
+      pre { background: #f4f4f4; border: 1px solid #e2e2e2; border-radius: 6px;
+            padding: 0.9rem 1rem; margin: 0.75rem 0; overflow-x: auto;
+            line-height: 1.45; }
+      .cmd { display: block; background: #f4f4f4; border: 1px solid #e2e2e2;
+             border-radius: 6px; padding: 0.75rem 1rem; margin: 0.5rem 0; }
+      .muted { color: #777; }
+
+      footer { width: 600px; max-width: calc(100% - 2rem); margin: 3rem auto 0;
+               padding-top: 1.25rem; border-top: 1px solid #ddd;
+               color: #555; font-size: 0.9em; display: flex;
+               justify-content: space-between; }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <span class="site-name"><a href="https://www.jud.me/">jud stephenson</a></span>
+      <span class="links"><a href="https://www.jud.me/">← home</a></span>
+    </nav>
+
+    <header>
+      <h1>ve-core</h1>
+      <p class="tagline">verifiable encryption for key recovery.</p>
+      <p class="sub">hand someone an encrypted key share and a proof that it
+        decrypts to exactly the share you committed to. they check it offline,
+        with public data, before anyone reveals a secret.</p>
+    </header>
+
+    <section class="main">
+      <h2>what it is</h2>
+      <p>recovery usually runs on trust. a server keeps a copy, or a backup sits
+        in a drawer, and you find out whether it actually works the day you need
+        it. that is a bad day to find out.</p>
+      <p>ve-core flips it. the party you seal a share to can prove, in zero
+        knowledge, that the ciphertext decrypts to the share you committed to.
+        the proof is public-coin: any verifier checks it with public data, no
+        secret and no decryption. the holder of the recovery key decrypts later.
+        nobody has to trust that the sealed share is good. they verify it.</p>
+      <p>a plaintext is a secp256k1 scalar. seal it to a recovery public key,
+        get back a ciphertext carrying its own correctness proof.</p>
+
+      <h2>two backends, one interface</h2>
+      <p><code>ve-core</code> is the seam: the plaintext, the binding context,
+        and the backend trait family. pick a backend and the rest is the same.</p>
+      <ul>
+        <li><em>cl-hsmq-encryption</em>. verifiable encryption in the CL
+          framework: the BICYCL construction with the BCL24 ciphertext-correctness
+          proof, over imaginary-quadratic class groups. pure rust, no gmp, no
+          gpl.</li>
+        <li><em>ec-segve</em>. segmented verifiable encryption on native
+          secp256k1. the share is split into limbs, each encrypted under curve
+          elgamal, with base-b range proofs, an exact-integer carry chain, and a
+          linking sigma, all under one fiat-shamir challenge. it speaks the same
+          curve a hardware wallet already does, so the recovery key can be
+          seed-rooted on the device.</li>
+      </ul>
+
+      <h2>what the proof buys</h2>
+      <p>the proof is knowledge-sound. one accepting transcript extracts the
+        whole witness, so a sealed package cannot decrypt to anything but the
+        share it committed to. a malicious sealer cannot plant garbage that only
+        fails the day you recover. that is the anti-ransom property, and it is
+        checked at sealing time, recipient absent.</p>
+      <p>secrecy is the usual reduction: to anyone without the recovery key the
+        package leaks nothing beyond the public commitment. and the accept path
+        is bound by the type system. <code>verify</code> does not hand back an
+        <code>ok</code>; it hands back the commitment it bound, and you accept
+        only if that commitment equals the certified share. there is no shape of
+        the code where you forget the check.</p>
+
+      <h2>using it</h2>
+      <pre>let (pk, sk) = keygen()?;
+let ct = pk.seal(&share, &ctx)?;          // ciphertext + correctness proof
+pk.verify(&ct, &target, &ctx)?;           // proof holds AND commitment == target
+let share = sk.open(&ct, &ctx)?;          // verify, then decrypt</pre>
+      <p class="muted">pure rust. variable-time, for software adversaries
+        observing messages and stored ciphertexts, not local side-channel
+        attackers. heavily audited. not published yet: no crates.io, no public
+        source.</p>
+
+      <h2>reading</h2>
+      <ul>
+        <li>beaugrand, castagnos, laguillaumie. <em>efficient succinct
+          zero-knowledge arguments in the CL framework.</em> eprint 2024/1966.</li>
+        <li>bouvier, castagnos, imbert, laguillaumie. <em>BICYCL.</em> eprint
+          2022/1466.</li>
+        <li>castagnos, laguillaumie. <em>linearly homomorphic encryption from
+          DDH.</em> ct-rsa 2015.</li>
+      </ul>
+    </section>
+
+    <footer>
+      <span>built by <a href="https://twitter.com/judstephenson">@judstephenson</a></span>
+      <span><a href="https://www.jud.me/">jud.me</a></span>
+    </footer>
+  </body>
+</html>
