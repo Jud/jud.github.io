@@ -53,25 +53,25 @@
     <header>
       <h1>ve-core</h1>
       <p class="tagline">verifiable encryption for key recovery.</p>
-      <p class="sub">hand someone an encrypted signing key and a proof that it
-        really is the private key behind a given public key. they check it
-        offline, with public data, before anyone reveals a secret.</p>
+      <p class="sub">prove what a ciphertext decrypts to without revealing it.
+        here: that it holds the private key for a given public key, checkable by
+        anyone from public data alone.</p>
     </header>
 
     <section class="main">
       <h2>what it is</h2>
-      <p>recovery usually runs on trust. a server keeps a copy, or a backup sits
-        in a drawer, and you learn whether it actually works the day you need it.
-        bad day to find out.</p>
-      <p>ve-core lets you check first. you encrypt a signing key to a recovery
-        key and attach a short proof. the thing you check it against is a public
-        key. anyone can read the proof and confirm, in zero knowledge, that the
-        sealed secret is the private key for it: the key that signs so signatures
-        verify under that public key. no decrypting, no secret of yours, just
-        public data. the holder of the recovery key opens it later, only if they
-        ever have to.</p>
-      <p>so you never take a backup on faith. it is the difference between a
-        spare key you assume fits and one you have already tried in the lock.</p>
+      <p>verifiable encryption lets you prove what a ciphertext decrypts to
+        without revealing it, and without decrypting it. the proof travels with
+        the ciphertext, and anyone checks it from public data.</p>
+      <p>in ve-core the claim is specific: that the ciphertext holds the private
+        key for a given public key, the key that signs so signatures verify under
+        it. so a holder of only the public key can confirm exactly what is sealed
+        inside, in zero knowledge, and never see it.</p>
+      <p>the obvious use is recovery. recovery usually runs on trust: a server
+        keeps a copy, a backup sits in a drawer, and you learn whether it works
+        the day you need it. this lets you check up front instead. it is the
+        difference between a spare key you assume fits and one you have already
+        tried in the lock.</p>
 
       <h2>one key, or a package</h2>
       <p>the simplest use seals one secret to one recovery key. you check the
