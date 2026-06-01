@@ -53,9 +53,9 @@
     <header>
       <h1>ve-core</h1>
       <p class="tagline">verifiable encryption for key recovery.</p>
-      <p class="sub">hand someone an encrypted key share and a proof that it
-        decrypts to exactly the share you committed to. they check it offline,
-        with public data, before anyone reveals a secret.</p>
+      <p class="sub">hand someone an encrypted signing key and a proof that it
+        really is the private key behind a given public key. they check it
+        offline, with public data, before anyone reveals a secret.</p>
     </header>
 
     <section class="main">
@@ -63,25 +63,28 @@
       <p>recovery usually runs on trust. a server keeps a copy, or a backup sits
         in a drawer, and you learn whether it actually works the day you need it.
         bad day to find out.</p>
-      <p>ve-core lets you check first. you encrypt a secret to a recovery key and
-        attach a short proof. anyone can read that proof and confirm one thing,
-        in plain terms: this ciphertext really will decrypt to the value it
-        claims. no decrypting it, no secret of yours, just public bytes. the
-        holder of the recovery key opens it later, only if they ever have to.</p>
+      <p>ve-core lets you check first. you encrypt a signing key to a recovery
+        key and attach a short proof. the thing you check it against is a public
+        key. anyone can read the proof and confirm, in zero knowledge, that the
+        sealed secret is the private key for it: the key that signs so signatures
+        verify under that public key. no decrypting, no secret of yours, just
+        public data. the holder of the recovery key opens it later, only if they
+        ever have to.</p>
       <p>so you never take a backup on faith. it is the difference between a
         spare key you assume fits and one you have already tried in the lock.</p>
 
       <h2>a sealed share, and a package</h2>
       <p>the basic unit is one <em>sealed share</em>: a single secret, encrypted
-        to one recovery key, carrying its own proof. checking it tells you
-        something exact. not that it is a valid encryption of something, but that
-        it decrypts to the specific value you were expecting.</p>
-      <p>real recovery uses a <em>package</em>: your key is split into several
-        shares, each sealed to a different holder, and the shares are arranged so
-        their public commitments add back up to your key. check every sealed
-        share against its commitment and you have proven the whole package
-        restores your actual key. one swapped, tampered, or junk share is caught
-        when the package is checked, not when you are trying to recover.</p>
+        to one recovery key, carrying its own proof. you check it against a
+        public key, and the proof guarantees the sealed secret is the private key
+        for it. not a value you would merely recognize, the exact key that signs
+        under that public key.</p>
+      <p>real recovery uses a <em>package</em>: your signing key is split into
+        shares, each sealed to a different holder. each share has its own public
+        key, and those public keys add up to your account's public key. check
+        every sealed share against its public key and you have proven the package
+        restores a key that signs for your account. one swapped, tampered, or
+        junk share fails its check, long before you ever try to recover.</p>
 
       <h2>two backends, one interface</h2>
       <p><code>ve-core</code> is the seam: the plaintext, the binding context,
@@ -101,11 +104,11 @@
 
       <h2>what makes it hold up</h2>
       <p><em>it cannot lie about what is inside.</em> the proof is
-        knowledge-sound: a single passing check pins down the whole secret, so a
-        sealed share cannot decrypt to anything but the value it committed to.
-        that is what stops someone sealing junk, or the wrong key, that only
-        surfaces the day you try to recover. it is checked when the share is
-        made, with the recipient absent.</p>
+        knowledge-sound: a single passing check pins down the secret, so the
+        ciphertext cannot decrypt to anything but the private key for the public
+        key you checked against. that is what stops someone sealing junk, or the
+        wrong key, that only surfaces the day you try to recover. it is checked
+        when the share is made, with the recipient absent.</p>
       <p><em>it does not reveal the secret.</em> to anyone without the recovery
         key, a sealed share leaks nothing beyond its public commitment, which was
         public to begin with.</p>
@@ -117,7 +120,7 @@
       <h2>using it</h2>
       <pre>let (pk, sk) = keygen()?;
 let ct = pk.seal(&share, &ctx)?;          // ciphertext + correctness proof
-pk.verify(&ct, &target, &ctx)?;           // proof holds AND the value is exactly `target`
+pk.verify(&ct, &target, &ctx)?;           // proof holds AND the secret is the private key for `target`
 let share = sk.open(&ct, &ctx)?;          // verify, then decrypt</pre>
       <p class="muted">pure rust. variable-time, for software adversaries
         observing messages and stored ciphertexts, not local side-channel
