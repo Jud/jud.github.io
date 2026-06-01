@@ -73,18 +73,18 @@
       <p>so you never take a backup on faith. it is the difference between a
         spare key you assume fits and one you have already tried in the lock.</p>
 
-      <h2>a sealed share, and a package</h2>
-      <p>the basic unit is one <em>sealed share</em>: a single secret, encrypted
-        to one recovery key, carrying its own proof. you check it against a
-        public key, and the proof guarantees the sealed secret is the private key
-        for it. not a value you would merely recognize, the exact key that signs
-        under that public key.</p>
-      <p>real recovery uses a <em>package</em>: your signing key is split into
-        shares, each sealed to a different holder. each share has its own public
-        key, and those public keys add up to your account's public key. check
-        every sealed share against its public key and you have proven the package
-        restores a key that signs for your account. one swapped, tampered, or
-        junk share fails its check, long before you ever try to recover.</p>
+      <h2>one key, or a package</h2>
+      <p>the simplest use seals one secret to one recovery key. you check the
+        ciphertext against a public key, and the proof guarantees the sealed
+        secret is the private key for it: the exact key that signs under that
+        public key. one ciphertext, one proof, one holder who can decrypt it.</p>
+      <p>or split the secret so no one holds it alone. each share is sealed to
+        its own recovery key with its own proof, and the shares' public keys add
+        up to your account's public key. that bundle is a <em>package</em>. check
+        every share against its public key and you have proven the package
+        restores your account key, with no single holder ever seeing the whole
+        thing. a swapped, tampered, or junk share fails its check, long before
+        you try to recover.</p>
 
       <h2>two backends, one interface</h2>
       <p><code>ve-core</code> is the seam: the plaintext, the binding context,
