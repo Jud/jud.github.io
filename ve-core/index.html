@@ -63,10 +63,11 @@
       <p>verifiable encryption is encryption with a public check attached. the
         recipient can open the ciphertext; anyone else can verify, from public
         data, what it decrypts to, without decrypting it.</p>
-      <p>ve-core does this for one plaintext: a secp256k1 scalar, a private key.
-        seal it to a recipient key; verify rejects it unless the scalar's public
-        key is the target you name, c = m·g must equal t. a holder of only the
-        public key learns exactly which scalar is sealed, and never sees it.</p>
+      <p>ve-core does this for one plaintext: a secp256k1 scalar. a private key,
+        a FROST signing share, a share of an MPC-distributed key. seal it to a
+        recipient key; verify rejects it unless the scalar's public key is the
+        target you name, c = m·g must equal t. a holder of only the public key
+        learns exactly which scalar is sealed, and never sees it.</p>
       <p>useful wherever a secp256k1 secret crosses a trust boundary: escrow,
         custody handoff, auditable backup, wallet recovery, an MPC setup. it is
         the difference between a spare key you assume fits and one you have
@@ -76,10 +77,11 @@
       <p>one scalar, one recipient: you know the target t = m·g, seal the scalar
         to the recipient key, and anyone with the ciphertext, target, and context
         can verify it. only the recipient's secret key opens it.</p>
-      <p>or split the scalar first, so no one holds it whole. seal each share to
-        its own recipient with its own proof. that bundle is a <em>package</em>;
-        it checks out only when the shares' public keys add up to the target your
-        protocol expects. one swapped or junk share fails up front.</p>
+      <p>or split the scalar into shares (a FROST or MPC sharing), so no one
+        holds it whole. seal each share to its own recipient with its own proof.
+        that bundle is a <em>package</em>; it checks out only when the shares'
+        public keys add up to the target your protocol expects. one swapped or
+        junk share fails up front.</p>
       <p>single or split, the same narrow job: verifiable encryption of secp256k1
         scalars.</p>
 
