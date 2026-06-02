@@ -53,42 +53,35 @@
     <header>
       <h1>ve-core</h1>
       <p class="tagline">verifiable encryption for secp256k1 secrets.</p>
-      <p class="sub">seal a secp256k1 secret scalar to a recipient key. anyone
-        can check that the sealed scalar maps to a given public key, without
-        seeing the scalar or decrypting it.</p>
+      <p class="sub">seal a secp256k1 scalar to a recipient key. anyone can
+        verify it maps to a given public key, without seeing it or decrypting
+        it.</p>
     </header>
 
     <section class="main">
       <h2>what it is</h2>
       <p>verifiable encryption is encryption with a public check attached. the
-        recipient can open the ciphertext later. everyone else can check now,
-        from public data, that it decrypts to what it claims, without decrypting
-        it.</p>
-      <p>ve-core works on one kind of plaintext: a secp256k1 secret scalar, a
-        private key. you seal a scalar to a recipient key, and verify rejects it
-        unless the scalar's public key is the target you supplied. in symbols the
-        proved commitment is c = m·g, and c must equal your target t. so a holder
-        of only the public key confirms exactly which scalar is sealed inside,
-        and never sees it.</p>
-      <p>that helps whenever a secp256k1 secret has to cross a trust boundary:
-        escrow, a custody handoff, an auditable backup, wallet recovery, an MPC
-        setup. recovery is one use, not the whole point. it is the difference
-        between a spare key you assume fits and one you have already tried in the
-        lock.</p>
+        recipient can open the ciphertext; anyone else can verify, from public
+        data, what it decrypts to, without decrypting it.</p>
+      <p>ve-core does this for one plaintext: a secp256k1 scalar, a private key.
+        seal it to a recipient key; verify rejects it unless the scalar's public
+        key is the target you name, c = m·g must equal t. a holder of only the
+        public key learns exactly which scalar is sealed, and never sees it.</p>
+      <p>useful wherever a secp256k1 secret crosses a trust boundary: escrow,
+        custody handoff, auditable backup, wallet recovery, an MPC setup. it is
+        the difference between a spare key you assume fits and one you have
+        already tried in the lock.</p>
 
       <h2>one key, or a package</h2>
-      <p>the simple case is one scalar to one recipient. you know the target
-        public key, t = m·g. seal the scalar to the recipient key. anyone with
-        the ciphertext, the target, and the context can verify it; only the
-        recipient's secret key can open it.</p>
+      <p>one scalar, one recipient: you know the target t = m·g, seal the scalar
+        to the recipient key, and anyone with the ciphertext, target, and context
+        can verify it. only the recipient's secret key opens it.</p>
       <p>or split the scalar first, so no one holds it whole. seal each share to
-        its own recipient, each with its own proof against its own public key.
-        bundled together that is a <em>package</em>, and it checks out only when
-        those public keys add up to the target your protocol expects. a swapped,
-        tampered, or junk share fails its check up front.</p>
-      <p>single or split, it is the same narrow job: verifiable encryption of
-        secp256k1 secret scalars. the package can back escrow, a custody handoff,
-        an auditable backup, wallet recovery, or a threshold setup.</p>
+        its own recipient with its own proof. that bundle is a <em>package</em>;
+        it checks out only when the shares' public keys add up to the target your
+        protocol expects. one swapped or junk share fails up front.</p>
+      <p>single or split, the same narrow job: verifiable encryption of secp256k1
+        scalars.</p>
 
       <h2>two backends, one interface</h2>
       <p><code>ve-core</code> is the seam: the plaintext, the binding context,
@@ -99,27 +92,25 @@
           proof, over imaginary-quadratic class groups. pure rust, no gmp, no
           gpl.</li>
         <li><em>ec-segve</em>. segmented verifiable encryption on native
-          secp256k1. the share is split into limbs, each encrypted under curve
-          elgamal, with base-b range proofs, an exact-integer carry chain, and a
-          linking sigma, all under one fiat-shamir challenge. it speaks the same
-          curve a hardware wallet already does, so the recipient key can be
-          seed-rooted on the device.</li>
+          secp256k1: each scalar split into limbs under curve elgamal, with
+          base-b range proofs, an exact-integer carry chain, and a linking sigma
+          under one fiat-shamir challenge. native curve, so a hardware wallet can
+          seed-root the recipient key.</li>
       </ul>
 
       <h2>what makes it hold up</h2>
       <p><em>it cannot lie about what is inside.</em> the proof is
-        knowledge-sound: a single passing check pins down the secret, so the
-        ciphertext cannot decrypt to anything but the private key for the public
-        key you checked against. that is what stops someone sealing junk, or the
-        wrong scalar, that only surfaces when the secret is finally opened. it is
-        checked when the ciphertext is made, with the recipient absent.</p>
+        knowledge-sound, so a passing check pins the ciphertext to one scalar:
+        the private key for the public key you named. no sealing junk or a wrong
+        key that only surfaces when someone finally opens it. checked when the
+        ciphertext is made, recipient absent.</p>
       <p><em>it does not reveal the secret.</em> to anyone without the recipient
-        key, a ciphertext leaks nothing beyond its public commitment, which was
-        public to begin with.</p>
-      <p><em>you cannot forget to check.</em> <code>verify</code> does not hand
-        back a bare <code>ok</code>. it hands back the commitment it just proved,
-        and you accept only when that commitment is the one you expected. the
-        check is the return value, not a step you might skip.</p>
+        key, the ciphertext leaks nothing beyond its commitment, which was public
+        anyway.</p>
+      <p><em>you cannot forget to check.</em> <code>verify</code> hands back the
+        commitment it proved, never a bare <code>ok</code>; you accept only if it
+        equals the one you expected. the check is the return value, not a step you
+        can skip.</p>
 
       <h2>using it</h2>
       <pre>let (pk, sk) = keygen()?;
