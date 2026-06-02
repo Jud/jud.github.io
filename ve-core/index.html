@@ -86,11 +86,11 @@
       <p>one scalar, one recipient: you know the target t = m·g, seal the scalar
         to the recipient key, and anyone with the ciphertext, target, and context
         can verify it. only the recipient's secret key opens it.</p>
-      <p>or split the scalar into shares (a FROST or MPC sharing), so no one
-        holds it whole. seal each share to its own recipient with its own proof.
-        that bundle is a <em>package</em>; it checks out only when the shares'
-        public keys add up to the target your protocol expects. one swapped or
-        junk share fails up front.</p>
+      <p>or, when a key is already split across participants (a FROST or MPC
+        sharing), each participant seals their share to the same recipient, with
+        its own proof. together the sealed shares are a <em>package</em>; it
+        checks out only when their public keys add up to the target the group
+        certified. one wrong share fails the whole package up front.</p>
 
       <h2>two backends, one interface</h2>
       <p><code>ve-core</code> is the seam: the plaintext, the binding context,
