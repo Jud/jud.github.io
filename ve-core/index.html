@@ -64,14 +64,10 @@
         recipient can open the ciphertext; anyone else can verify, from public
         data, what it decrypts to, without decrypting it.</p>
       <p>ve-core does this for one plaintext: a secp256k1 scalar. a private key,
-        a FROST signing share, a share of an MPC-distributed key. seal it to a
-        recipient key; verify rejects it unless the scalar's public key is the
-        target you name, c = m·g must equal t. a holder of only the public key
-        learns exactly which scalar is sealed, and never sees it.</p>
-      <p>useful wherever a secp256k1 secret crosses a trust boundary: escrow,
-        custody handoff, auditable backup, wallet recovery, an MPC setup. it is
-        the difference between a spare key you assume fits and one you have
-        already tried in the lock.</p>
+        a FROST signing share, an MPC key share. seal it to a recipient key;
+        verify rejects it unless the scalar's public key is the target you name,
+        c = m·g must equal t.</p>
+      <p>useful wherever a secp256k1 secret crosses a trust boundary.</p>
 
       <h2>what it's for</h2>
       <ul>
@@ -79,12 +75,11 @@
           device that is not online, and let anyone confirm they got the right
           one without seeing it.</li>
         <li><em>check your own backups.</em> back up a key and confirm the backup
-          really restores it, before the day you need it.</li>
+          really restores it.</li>
         <li><em>escrow and inheritance.</em> leave a key with an agent or a
-          successor; it stays sealed until needed, and anyone can confirm it is
-          the right key now.</li>
-        <li><em>fair exchange.</em> release a secret only once anyone can check it
-          is the right one. the basis of atomic swaps and escrowed payments.</li>
+          successor, provably the right key, sealed until it is needed.</li>
+        <li><em>fair exchange.</em> release a secret only when anyone can check it
+          is the right one. atomic swaps and escrowed payments work this way.</li>
       </ul>
 
       <h2>one key, or a package</h2>
@@ -96,12 +91,10 @@
         that bundle is a <em>package</em>; it checks out only when the shares'
         public keys add up to the target your protocol expects. one swapped or
         junk share fails up front.</p>
-      <p>single or split, the same narrow job: verifiable encryption of secp256k1
-        scalars.</p>
 
       <h2>two backends, one interface</h2>
       <p><code>ve-core</code> is the seam: the plaintext, the binding context,
-        and the backend trait family. pick a backend and the rest is the same.</p>
+        and the backend trait family.</p>
       <ul>
         <li><em>cl-hsmq-encryption</em>. verifiable encryption in the CL
           framework: the BICYCL construction with the BCL24 ciphertext-correctness
@@ -117,16 +110,15 @@
       <h2>what makes it hold up</h2>
       <p><em>it cannot lie about what is inside.</em> the proof is
         knowledge-sound, so a passing check pins the ciphertext to one scalar:
-        the private key for the public key you named. no sealing junk or a wrong
-        key that only surfaces when someone finally opens it. checked when the
-        ciphertext is made, recipient absent.</p>
+        the private key for the public key you named. nobody can seal junk that
+        checks out now and fails when it is opened. checked when the ciphertext
+        is made, recipient absent.</p>
       <p><em>it does not reveal the secret.</em> to anyone without the recipient
         key, the ciphertext leaks nothing beyond its commitment, which was public
         anyway.</p>
-      <p><em>you cannot forget to check.</em> <code>verify</code> hands back the
-        commitment it proved, never a bare <code>ok</code>; you accept only if it
-        equals the one you expected. the check is the return value, not a step you
-        can skip.</p>
+      <p><em>the check is built in.</em> <code>verify</code> returns the
+        commitment it proved, not a bare <code>ok</code>; you accept only if it
+        equals your target. there is no accept path that skips the comparison.</p>
 
       <h2>using it</h2>
       <pre>let (pk, sk) = keygen()?;
