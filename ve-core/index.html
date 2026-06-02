@@ -73,6 +73,23 @@
         the difference between a spare key you assume fits and one you have
         already tried in the lock.</p>
 
+      <h2>what it's for</h2>
+      <ul>
+        <li><em>enroll an offline peer.</em> add a backup signer to a threshold
+          group by sealing their key share to them. anyone can verify the peer
+          was enrolled correctly, that the sealed share is the right one, while
+          the peer is offline and without ever learning their secret.</li>
+        <li><em>verify your own backups.</em> back up a signing key and confirm
+          up front that the backup restores the right key, instead of finding out
+          the day you need it.</li>
+        <li><em>inheritance and handoff.</em> seal a key to a successor's public
+          key with a proof it is really the right key; they confirm they hold a
+          working copy without you exposing it now.</li>
+        <li><em>fair exchange.</em> the classic use: verifiably encrypt a secret
+          to a counterparty so a third party can confirm it is the right one
+          before release. atomic swaps, escrowed payments, adaptor secrets.</li>
+      </ul>
+
       <h2>one key, or a package</h2>
       <p>one scalar, one recipient: you know the target t = m·g, seal the scalar
         to the recipient key, and anyone with the ciphertext, target, and context
