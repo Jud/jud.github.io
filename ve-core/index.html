@@ -3,8 +3,8 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ve-core: verifiable encryption for key recovery</title>
-    <meta name="description" content="encrypt a key share to a recovery key and prove it decrypts to exactly that share. checked offline, with public data, before any secret is revealed. pure rust.">
+    <title>ve-core: verifiable encryption for secp256k1 secrets</title>
+    <meta name="description" content="seal a secp256k1 secret scalar to a recipient key and prove it maps to a given public key, without revealing it or decrypting it. checkable by anyone from public data. pure rust.">
     <style>
       body { margin: 0; padding: 2em 0 4em; font-family: monospace; color: #111;
              line-height: 1.5; }
@@ -52,39 +52,43 @@
 
     <header>
       <h1>ve-core</h1>
-      <p class="tagline">verifiable encryption for key recovery.</p>
-      <p class="sub">prove what a ciphertext decrypts to without revealing it.
-        here: that it holds the private key for a given public key, checkable by
-        anyone from public data alone.</p>
+      <p class="tagline">verifiable encryption for secp256k1 secrets.</p>
+      <p class="sub">seal a secp256k1 secret scalar to a recipient key. anyone
+        can check that the sealed scalar maps to a given public key, without
+        seeing the scalar or decrypting it.</p>
     </header>
 
     <section class="main">
       <h2>what it is</h2>
-      <p>verifiable encryption lets you prove what a ciphertext decrypts to
-        without revealing it, and without decrypting it. the proof travels with
-        the ciphertext, and anyone checks it from public data.</p>
-      <p>in ve-core the claim is specific: that the ciphertext holds the private
-        key for a given public key, the key that signs so signatures verify under
-        it. so a holder of only the public key can confirm exactly what is sealed
-        inside, in zero knowledge, and never see it.</p>
-      <p>the obvious use is recovery. recovery usually runs on trust: a server
-        keeps a copy, a backup sits in a drawer, and you learn whether it works
-        the day you need it. this lets you check up front instead. it is the
-        difference between a spare key you assume fits and one you have already
-        tried in the lock.</p>
+      <p>verifiable encryption is encryption with a public check attached. the
+        recipient can open the ciphertext later. everyone else can check now,
+        from public data, that it decrypts to what it claims, without decrypting
+        it.</p>
+      <p>ve-core works on one kind of plaintext: a secp256k1 secret scalar, a
+        private key. you seal a scalar to a recipient key, and verify rejects it
+        unless the scalar's public key is the target you supplied. in symbols the
+        proved commitment is c = m·g, and c must equal your target t. so a holder
+        of only the public key confirms exactly which scalar is sealed inside,
+        and never sees it.</p>
+      <p>that helps whenever a secp256k1 secret has to cross a trust boundary:
+        escrow, a custody handoff, an auditable backup, wallet recovery, an MPC
+        setup. recovery is one use, not the whole point. it is the difference
+        between a spare key you assume fits and one you have already tried in the
+        lock.</p>
 
       <h2>one key, or a package</h2>
-      <p>the simplest use seals one secret to one recovery key. you check the
-        ciphertext against a public key, and the proof guarantees the sealed
-        secret is the private key for it: the exact key that signs under that
-        public key. one ciphertext, one proof, one holder who can decrypt it.</p>
-      <p>or split the secret so no one holds it alone. each share is sealed to
-        its own recovery key with its own proof, and the shares' public keys add
-        up to your account's public key. that bundle is a <em>package</em>. check
-        every share against its public key and you have proven the package
-        restores your account key, with no single holder ever seeing the whole
-        thing. a swapped, tampered, or junk share fails its check, long before
-        you try to recover.</p>
+      <p>the simple case is one scalar to one recipient. you know the target
+        public key, t = m·g. seal the scalar to the recipient key. anyone with
+        the ciphertext, the target, and the context can verify it; only the
+        recipient's secret key can open it.</p>
+      <p>or split the scalar first, so no one holds it whole. seal each share to
+        its own recipient, each with its own proof against its own public key.
+        bundled together that is a <em>package</em>, and it checks out only when
+        those public keys add up to the target your protocol expects. a swapped,
+        tampered, or junk share fails its check up front.</p>
+      <p>single or split, it is the same narrow job: verifiable encryption of
+        secp256k1 secret scalars. the package can back escrow, a custody handoff,
+        an auditable backup, wallet recovery, or a threshold setup.</p>
 
       <h2>two backends, one interface</h2>
       <p><code>ve-core</code> is the seam: the plaintext, the binding context,
@@ -98,7 +102,7 @@
           secp256k1. the share is split into limbs, each encrypted under curve
           elgamal, with base-b range proofs, an exact-integer carry chain, and a
           linking sigma, all under one fiat-shamir challenge. it speaks the same
-          curve a hardware wallet already does, so the recovery key can be
+          curve a hardware wallet already does, so the recipient key can be
           seed-rooted on the device.</li>
       </ul>
 
@@ -107,10 +111,10 @@
         knowledge-sound: a single passing check pins down the secret, so the
         ciphertext cannot decrypt to anything but the private key for the public
         key you checked against. that is what stops someone sealing junk, or the
-        wrong key, that only surfaces the day you try to recover. it is checked
-        when the share is made, with the recipient absent.</p>
-      <p><em>it does not reveal the secret.</em> to anyone without the recovery
-        key, a sealed share leaks nothing beyond its public commitment, which was
+        wrong scalar, that only surfaces when the secret is finally opened. it is
+        checked when the ciphertext is made, with the recipient absent.</p>
+      <p><em>it does not reveal the secret.</em> to anyone without the recipient
+        key, a ciphertext leaks nothing beyond its public commitment, which was
         public to begin with.</p>
       <p><em>you cannot forget to check.</em> <code>verify</code> does not hand
         back a bare <code>ok</code>. it hands back the commitment it just proved,
@@ -119,9 +123,9 @@
 
       <h2>using it</h2>
       <pre>let (pk, sk) = keygen()?;
-let ct = pk.seal(&share, &ctx)?;          // ciphertext + correctness proof
-pk.verify(&ct, &target, &ctx)?;           // proof holds AND the secret is the private key for `target`
-let share = sk.open(&ct, &ctx)?;          // verify, then decrypt</pre>
+let ct = pk.seal(&secret, &ctx)?;         // ciphertext + correctness proof
+pk.verify(&ct, &target, &ctx)?;           // proof holds AND the scalar maps to `target`
+let secret = sk.open(&ct, &ctx)?;         // verify, then decrypt</pre>
       <p class="muted">pure rust. variable-time, for software adversaries
         observing messages and stored ciphertexts, not local side-channel
         attackers. heavily audited. not published yet: no crates.io, no public
