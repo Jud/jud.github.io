@@ -4,7 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Operator — talk to your terminal</title>
-    <meta name="description" content="Voice orchestration for terminal agents. Push to talk, it routes to the right agent and talks back. Fully on-device.">
+    <meta name="description" content="Talk to your terminal. Hold a key, say what you want, and it lands in the terminal you're looking at — instantly, on-device. Your coding agents talk back. A minimal menu-bar app for people who ship software.">
     <style>
       body { margin: 0; padding: 2em 0 4em; font-family: monospace; color: #111;
              line-height: 1.5; }
@@ -64,25 +64,28 @@
     <header>
       <h1>Operator</h1>
       <p class="tagline">Talk to your terminal.</p>
-      <p class="sub">Push a button, say what you want — it routes to the right
-        terminal agent and talks back. Fully on-device.</p>
+      <p class="sub">Hold a key, say what you want — and it lands in the terminal
+        you're looking at, instantly. Your agents talk back. Nothing you say
+        leaves your Mac.</p>
     </header>
 
     <div class="demo">[ 30-second demo video ]</div>
 
     <section class="main">
       <h2>What it is</h2>
-      <p>Voice orchestration for terminal agents. Run several Claude Code (or
-        aider, codex, …) sessions at once and just <em>talk</em> — Operator
-        transcribes, figures out which agent you mean, delivers the message, and
-        speaks the reply back in that agent's own voice.</p>
+      <p>A tiny menu-bar app that turns talking into terminal input. Hold the
+        trigger key, say what you want, and Operator drops it straight into the
+        terminal you're looking at — Claude Code, a REPL, a plain shell. When an
+        agent has something to say back, it says it out loud. Everything runs
+        on-device.</p>
 
-      <h2>Why it's different</h2>
+      <h2>Why it's good</h2>
       <ul>
-        <li><em>Multi-session routing</em> — say "tell sudo to check the mempool" and it lands in the right session.</li>
-        <li><em>Voice in and out</em> — each agent gets its own voice, so you know who's talking.</li>
-        <li><em>Fully on-device</em> — WhisperKit for ears, Kokoro for mouth. No cloud, no API costs, no network round-trip.</li>
-        <li><em>Terminal-native</em> — works with iTerm2 and Ghostty, not a browser tab.</li>
+        <li><em>Fast</em> — push-to-talk to text in your terminal in about a second. No cloud hop, no spinner.</li>
+        <li><em>All local</em> — WhisperKit listens, Kokoro speaks, both on your Mac. No cloud, no API keys, nothing you say leaves the machine. Works on a plane.</li>
+        <li><em>Minimal</em> — a menu-bar icon and one hotkey. Everything you need, nothing you don't.</li>
+        <li><em>Terminal-native</em> — iTerm2 and Ghostty, not a browser tab. Running several agents? Each gets its own voice, so you know who's talking.</li>
+        <li><em>Built by someone who writes software</em> — keyboard-first, local, no telemetry, no nonsense. The tool I wanted for running a wall of terminals.</li>
       </ul>
 
       <h2>Install</h2>
