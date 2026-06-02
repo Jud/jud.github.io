@@ -75,19 +75,16 @@
 
       <h2>what it's for</h2>
       <ul>
-        <li><em>enroll an offline peer.</em> add a backup signer to a threshold
-          group by sealing their key share to them. anyone can verify the peer
-          was enrolled correctly, that the sealed share is the right one, while
-          the peer is offline and without ever learning their secret.</li>
-        <li><em>verify your own backups.</em> back up a signing key and confirm
-          up front that the backup restores the right key, instead of finding out
-          the day you need it.</li>
-        <li><em>inheritance and handoff.</em> seal a key to a successor's public
-          key with a proof it is really the right key; they confirm they hold a
-          working copy without you exposing it now.</li>
-        <li><em>fair exchange.</em> the classic use: verifiably encrypt a secret
-          to a counterparty so a third party can confirm it is the right one
-          before release. atomic swaps, escrowed payments, adaptor secrets.</li>
+        <li><em>set up someone who is offline.</em> seal a key to a person or
+          device that is not online, and let anyone confirm they got the right
+          one without seeing it.</li>
+        <li><em>check your own backups.</em> back up a key and confirm the backup
+          really restores it, before the day you need it.</li>
+        <li><em>escrow and inheritance.</em> leave a key with an agent or a
+          successor; it stays sealed until needed, and anyone can confirm it is
+          the right key now.</li>
+        <li><em>fair exchange.</em> release a secret only once anyone can check it
+          is the right one. the basis of atomic swaps and escrowed payments.</li>
       </ul>
 
       <h2>one key, or a package</h2>
