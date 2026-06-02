@@ -128,6 +128,7 @@ let share = sk.open(&ct, &ctx)?;          // verify, then decrypt</pre>
         source.</p>
 
       <h2>reading</h2>
+      <p class="muted">cl-hsmq</p>
       <ul>
         <li>beaugrand, castagnos, laguillaumie. <em>efficient succinct
           zero-knowledge arguments in the CL framework.</em> eprint 2024/1966.</li>
@@ -135,6 +136,21 @@ let share = sk.open(&ct, &ctx)?;          // verify, then decrypt</pre>
           2022/1466.</li>
         <li>castagnos, laguillaumie. <em>linearly homomorphic encryption from
           DDH.</em> ct-rsa 2015.</li>
+      </ul>
+      <p class="muted">ec-segve</p>
+      <ul>
+        <li>camenisch, shoup. <em>practical verifiable encryption and decryption
+          of discrete logs.</em> crypto 2003. the verifiable-encryption template.</li>
+        <li>cramer, damgård, schoenmakers. <em>proofs of partial knowledge and
+          simplified design of witness hiding protocols.</em> crypto 1994. the OR
+          range proofs.</li>
+        <li>pedersen. <em>non-interactive and information-theoretic secure
+          verifiable secret sharing.</em> crypto 1991. the hiding commitments.</li>
+        <li>maurer. <em>unifying zero-knowledge proofs of knowledge.</em>
+          africacrypt 2009. the shared-response linking sigma.</li>
+        <li>pointcheval, stern. <em>security arguments for digital signatures and
+          blind signatures.</em> j. cryptology 2000. the forking lemma, for
+          knowledge-soundness.</li>
       </ul>
     </section>
 
