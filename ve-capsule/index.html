@@ -86,14 +86,14 @@
     <div class="mark">ve-capsule</div>
   </div>
   <header>
-    <h1>Don't trust, verify.</h1>
-    <p class="lede">Seal a secret to a recipient, prove it's the right one without revealing it, and optionally require an authorizer's consent before it can be unsealed.</p>
+    <h1>Verifiable private key encryption</h1>
+    <p class="lede">Seal a private key to a recipient, prove it's the right one without revealing it, and optionally require an authorizer's consent before it can be unsealed.</p>
   </header>
 
   <section>
     <div class="step">Seal</div>
     <h2>Seal a private key to a recipient</h2>
-    <p>Lock a private key, a recovery phrase, a credential, or any secret, to a recipient. What you get back is a <em>capsule</em>: opaque bytes that give nothing away. Store it, copy it, hand it around. It stays shut until the recipient opens it.</p>
+    <p>Lock a private key, or any secp256k1 scalar, to a recipient. What you get back is a <em>capsule</em>: opaque bytes that give nothing away. Store it, copy it, hand it around. It stays shut until the recipient opens it.</p>
 <pre><span class="k">let</span> capsule = Capsule::builder(&amp;private_key, &amp;recipient, &amp;ctx).seal()?;
 <span class="k">let</span> bytes   = capsule.to_canonical_bytes();   <span class="c">// just bytes; keep them anywhere</span></pre>
     <p class="muted">The recipient is a public key. Sealing needs only that; opening needs the private key behind it.</p>
@@ -125,7 +125,14 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <pre><span class="k">let</span> capsule = Capsule::builder(&amp;secret, &amp;recipient, &amp;ctx)
     .access_key(&amp;authorizer)      <span class="c">// an authorizer whose consent is required</span>
     .seal()?;</pre>
+    <p class="muted">Authorizers are public keys too. Gating needs only those; contributing needs the private key behind each.</p>
     <p>To open, the recipient gathers each authorizer's contribution and unseals. The contributions are independent, and anyone can check that one is genuine without learning anything about the secret.</p>
+<pre><span class="c">// each authorizer confirms the capsule, then creates its contribution:</span>
+<span class="k">let</span> verified = capsule.verify(&amp;public_key, &amp;recipient, &amp;[authorizer], &amp;ctx)?;
+<span class="k">let</span> partial  = verified.contribute(&amp;authorizer_key)?;
+
+<span class="c">// the recipient gathers the contributions and unseals:</span>
+<span class="k">let</span> recovered = verified.unseal(&amp;recipient_key, &amp;[partial])?;</pre>
   </section>
 
   <section>
