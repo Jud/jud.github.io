@@ -139,7 +139,7 @@
   <div class="pills">
     <span class="pill">secp256k1-only</span>
     <span class="pill">EC-ElGamal · segmented</span>
-    <span class="pill">no Birkhoff in-crate</span>
+    <span class="pill">blob-in · blob-out</span>
     <span class="pill">immutable capsule</span>
     <span class="pill">tight public surface</span>
   </div>
@@ -308,7 +308,6 @@ impl VerifiedCase {
     <li><span class="mk">∑</span><div><b>All-or-nothing, strict AND.</b> Partials are bucketed per gate and checked <code>Σ wᵢ·G == Y_accessₖ</code> per group — every group must independently reach quorum. One short, and the ciphertext is as inert as untouched (computationally, under DDH).</div></li>
     <li><span class="mk">#</span><div><b>The exact gate set is pinned.</b> Seal binds a canonical gate commitment <code>g*</code>, not just the sum — so a different key list with the same sum can't be substituted in.</div></li>
     <li><span class="mk">↻</span><div><b>No accepted replay.</b> Each Partial's DLEQ binds the capsule core-hash, gate tag &amp; context — it can't be reused against a different capsule, gate, or context.</div></li>
-    <li><span class="mk">⊘</span><div><b>No Birkhoff in the crate.</b> The integration layer pre-weights each share to <code>wᵢ = βᵢ·sᵢ</code>; the recipient only adds points. The recipient is simply the last shareholder — distinguished by never releasing its own partial.</div></li>
     <li><span class="mk">✓</span><div><b>Consent-gated.</b> <code>contribute</code> and <code>unseal</code> exist only on a <code>VerifiedCapsule</code>, closing the static-DH oracle: you never act on a capsule you haven't confirmed.</div></li>
   </ul>
 </div></section>
