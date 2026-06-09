@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ve-capsule — verifiable encryption on secp256k1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+  :root{
+    --bg:#f6f6f3; --panel:#ffffff; --ink:#14141a; --muted:#6b6b78; --faint:#9a9aa6;
+    --line:#e7e6e0; --accent:#5b4bd6; --accent-2:#7a6df0; --accent-soft:#eeebfd;
+    --code-bg:#15161d; --ok:#1f9d6b; --warn:#c0820a;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+  ::selection{background:var(--accent-soft)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:860px;margin:0 auto;padding:0 28px}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:20;backdrop-filter:saturate(1.2) blur(8px);
+    background:rgba(246,246,243,.82);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:14px;height:58px}
+  .brand{font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
+  .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);
+    box-shadow:0 0 0 4px var(--accent-soft)}
+  .brand small{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:500;
+    border:1px solid var(--line);padding:2px 7px;border-radius:999px;background:var(--panel)}
+  nav .links{margin-left:auto;display:flex;gap:22px;font-size:14px}
+  nav .links a{color:var(--muted)}
+  nav .links a:hover{color:var(--ink);text-decoration:none}
+  @media(max-width:640px){nav .links{display:none}}
+
+  /* hero */
+  header{padding:84px 0 40px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--accent);font-weight:600;margin-bottom:18px}
+  h1{font-size:64px;line-height:1.02;letter-spacing:-.04em;margin:0 0 18px;font-weight:800}
+  h1 .g{background:linear-gradient(100deg,var(--accent),var(--accent-2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:21px;color:#33333d;max-width:620px;margin:0 0 26px;line-height:1.5}
+  .pills{display:flex;flex-wrap:wrap;gap:8px}
+  .pill{font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+  @media(max-width:640px){h1{font-size:44px}.lede{font-size:18px}}
+
+  section{padding:46px 0;border-top:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--faint);font-weight:600;margin-bottom:14px}
+  h2{font-size:28px;letter-spacing:-.025em;margin:0 0 8px;font-weight:700}
+  h2 + .sub{color:var(--muted);margin:0 0 26px;font-size:16px}
+  p{color:#2c2c36}
+
+  /* one-sentence */
+  .sentence{font-size:23px;line-height:1.5;letter-spacing:-.01em;color:var(--ink);
+    border-left:3px solid var(--accent);padding:6px 0 6px 22px;margin:6px 0;font-weight:500}
+  .sentence b{color:var(--accent);font-weight:600}
+
+  /* composite key formula */
+  .formula{font-family:var(--mono);font-size:18px;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;padding:22px 24px;text-align:center;margin-top:20px;color:var(--ink);overflow-x:auto}
+  .formula .r{color:var(--accent)} .formula .a{color:#2f8f63} .formula .o{color:var(--faint)}
+  .formula .cap{display:block;font-family:var(--sans);font-size:13px;color:var(--muted);margin-top:10px}
+
+  /* pipeline */
+  .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 16px;
+    position:relative;transition:transform .15s ease,box-shadow .15s ease}
+  .step:hover{transform:translateY(-2px);box-shadow:0 10px 30px -16px rgba(91,75,214,.4)}
+  .step .n{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:600}
+  .step .v{font-family:var(--mono);font-size:16px;font-weight:600;margin:8px 0 6px;letter-spacing:-.01em}
+  .step .d{font-size:13px;color:var(--muted);line-height:1.45}
+  .step:not(:last-child)::after{content:"→";position:absolute;right:-13px;top:50%;
+    transform:translateY(-50%);color:var(--faint);font-size:16px;z-index:2}
+  @media(max-width:720px){.flow{grid-template-columns:1fr 1fr}.step:nth-child(2)::after,.step:not(:last-child)::after{content:""}}
+
+  /* type cards */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .card h3{font-family:var(--mono);font-size:15px;margin:0 0 6px;font-weight:600;color:var(--ink)}
+  .card h3 .tag{font-family:var(--sans);font-size:11px;font-weight:600;color:var(--accent);
+    background:var(--accent-soft);border-radius:6px;padding:2px 7px;margin-left:8px;vertical-align:1px}
+  .card p{margin:0;font-size:14px;color:var(--muted);line-height:1.5}
+
+  /* code */
+  pre{background:var(--code-bg);border-radius:14px;padding:22px 22px;overflow-x:auto;margin:18px 0 0;
+    border:1px solid #23242e;box-shadow:0 18px 40px -28px rgba(20,21,29,.6)}
+  pre code{font-family:var(--mono);font-size:13.5px;line-height:1.7;background:none;padding:0}
+  code{font-family:var(--mono);font-size:.92em;background:#edece6;border-radius:6px;padding:1px 6px}
+  .hljs{background:none;color:#e7e7ea}
+  .filebar{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--faint);
+    margin-bottom:-8px;padding-top:8px}
+  .filebar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+  /* invariants */
+  .inv{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media(max-width:720px){.inv{grid-template-columns:1fr}}
+  .inv .card h3{font-family:var(--sans);font-size:15px;color:var(--ink)}
+  .inv .badge{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700}
+
+  /* security list */
+  .sec{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:10px}
+  .sec li{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    display:flex;gap:12px;align-items:flex-start;font-size:14.5px}
+  .sec .mk{flex:0 0 auto;width:22px;height:22px;border-radius:7px;background:var(--accent-soft);
+    color:var(--accent);display:grid;place-items:center;font-size:13px;font-weight:700;margin-top:1px}
+  .sec b{color:var(--ink)}
+
+  footer{padding:48px 0 64px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+  .ghost{color:var(--faint)}
+  .note{font-size:12.5px;color:var(--faint);font-family:var(--mono);margin-top:10px}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <span class="brand"><span class="dot"></span>ve-capsule <small>v0.1 · open source</small></span>
+  <span class="links">
+    <a href="#flow">Pipeline</a><a href="#types">Types</a><a href="#api">API</a>
+    <a href="#example">Example</a><a href="#case">Case</a><a href="#invariants">Invariants</a><a href="#security">Security</a>
+  </span>
+</div></nav>
+
+<header><div class="wrap">
+  <div class="eyebrow">secp256k1 · verifiable encryption</div>
+  <h1>Seal a secret.<br>Open it by <span class="g">consent</span>.</h1>
+  <p class="lede">An opinionated crate: encrypt one secp256k1 scalar to a fixed recipient, gate it behind
+    a qualifying quorum, and recover it through non-destructive partials.</p>
+  <div class="pills">
+    <span class="pill">secp256k1-only</span>
+    <span class="pill">EC-ElGamal · segmented</span>
+    <span class="pill">no Birkhoff in-crate</span>
+    <span class="pill">immutable capsule</span>
+    <span class="pill">9 public types</span>
+  </div>
+</div></header>
+
+<section id="one"><div class="wrap">
+  <div class="kicker">The crate in one sentence</div>
+  <p class="sentence">Encrypt <b>one secp256k1 scalar</b> to a <b>fixed recipient</b>, optionally gated
+    behind a <b>qualifying quorum</b> of access keys.</p>
+
+  <div class="formula">
+    Y<span class="o">*</span> &nbsp;=&nbsp; <span class="r">Y<sub>rcpt</sub></span>
+    &nbsp;+&nbsp; <span class="a">Σ<sub>k</sub> Y<sub>access<sub>k</sub></sub></span>
+    <span class="cap">the composite key a secret is sealed to — recipient <em>plus</em> every access key (all required = AND)</span>
+  </div>
+</div></section>
+
+<section id="flow"><div class="wrap">
+  <div class="kicker">Lifecycle</div>
+  <h2>Four verbs, two phases</h2>
+  <p class="sub">Encryption is one call. Decryption is consent-gated: <code>verify</code> hands you a
+    capability token, and only that token can act.</p>
+  <div class="flow">
+    <div class="step"><div class="n">01 · seal</div><div class="v">seal</div>
+      <div class="d">Lock a scalar to <code>Y*</code> = recipient + gates. Yields an opaque, immutable capsule.</div></div>
+    <div class="step"><div class="n">02 · confirm</div><div class="v">verify</div>
+      <div class="d">Confirm the capsule against your authorization → a <code>VerifiedCapsule</code> token.</div></div>
+    <div class="step"><div class="n">03 · gate</div><div class="v">contribute</div>
+      <div class="d">Each authorizer emits a gate-tagged <code>Partial</code>. Non-destructive.</div></div>
+    <div class="step"><div class="n">04 · recover</div><div class="v">unseal</div>
+      <div class="d">The recipient gathers partials, buckets per gate, and recovers <code>m</code>.</div></div>
+  </div>
+  <p class="note">// contribute &amp; unseal exist <em>only</em> on the verified token — you cannot act on a capsule you haven't confirmed.</p>
+</div></section>
+
+<section id="types"><div class="wrap">
+  <div class="kicker">Surface</div>
+  <h2>Nine public types</h2>
+  <p class="sub">Concrete secp256k1 types throughout.</p>
+  <div class="grid">
+    <div class="card"><h3>Capsule</h3><p>The sealed, immutable ciphertext. Opaque outside the crate, and it never holds plaintext.</p></div>
+    <div class="card"><h3>CapsuleBuilder<span class="tag">borrows m</span></h3><p>Collects the secret, recipient, context &amp; gates; <code>.seal()</code> yields the capsule.</p></div>
+    <div class="card"><h3>VerifiedCapsule<span class="tag">capability</span></h3><p>A capsule you've confirmed. The only place <code>contribute</code> / <code>unseal</code> live.</p></div>
+    <div class="card"><h3>Partial</h3><p>One authorizer's gate-tagged decryption share + a batched DLEQ. A standalone, non-destructive artifact.</p></div>
+    <div class="card"><h3>Case / VerifiedCase</h3><p>The additive split of one secret to one recipient — verify checks <code>Σ Mⱼ == M</code>, then open every piece and sum to recover <code>s</code>.</p></div>
+    <div class="card"><h3>PrivateKey</h3><p>A zeroizing secret scalar — plaintext, key, or share. <code>.public_key()</code> derives its partner.</p></div>
+    <div class="card"><h3>PublicKey</h3><p>A nondegeneracy-checked secp256k1 point — the public partner of a <code>PrivateKey</code>.</p></div>
+    <div class="card"><h3>Error<span class="tag">non_exhaustive</span></h3><p>PointDecode · DegenerateInput · Verification.</p></div>
+  </div>
+</div></section>
+
+<section id="api"><div class="wrap">
+  <div class="kicker">API</div>
+  <h2>The whole signature</h2>
+  <p class="sub">A scalar in, a sealed blob out — and back again.</p>
+  <div class="filebar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>&nbsp; ve-capsule/lib.rs</div>
+<pre><code class="language-rust">impl Capsule {
+    pub fn builder(m: &amp;PrivateKey, recipient: &amp;PublicKey, ctx: &amp;impl Context) -&gt; CapsuleBuilder;
+
+    /// Confirm against the authorization → a capability token (the only way to act).
+    pub fn verify(&amp;self, expected_pubkey: &amp;PublicKey, expected_recipient: &amp;PublicKey,
+                  expected_access_keys: &amp;[PublicKey], ctx: &amp;impl Context) -&gt; Result&lt;VerifiedCapsule, Error&gt;;
+
+    pub fn to_canonical_bytes(&amp;self) -&gt; Vec&lt;u8&gt;;
+    pub fn from_canonical_bytes(bytes: &amp;[u8]) -&gt; Result&lt;Capsule, Error&gt;;
+}
+
+impl VerifiedCapsule {
+    /// An authorizer's non-destructive contribution for `gate` — a gate-tagged Partial.
+    pub fn contribute(&amp;self, key: &amp;PrivateKey, gate: &amp;PublicKey) -&gt; Result&lt;Partial, Error&gt;;
+
+    /// The recipient's terminal op: bucket per gate, strip, recover m.
+    pub fn unseal(&amp;self, recipient: &amp;PrivateKey, partials: &amp;[Partial]) -&gt; Result&lt;PrivateKey, Error&gt;;
+}
+
+impl PrivateKey {
+    pub fn from_secret(bytes: &amp;[u8]) -&gt; Result&lt;PrivateKey, Error&gt;;
+    pub fn public_key(&amp;self) -&gt; PublicKey;   // the public partner = scalar·G
+}</code></pre>
+</div></section>
+
+<section id="example"><div class="wrap">
+  <div class="kicker">In practice</div>
+  <h2>One authorizer, one recipient</h2>
+  <p class="sub">Two parties, both must act: the authorizer gates, the recipient opens. Neither can do it alone.</p>
+  <div class="filebar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>&nbsp; recover.rs</div>
+<pre><code class="language-rust">use ve_capsule::{Capsule, PrivateKey, Context};
+
+// every party derives its public key from its OWN secret — no co-generated pairs
+let recipient_sk  = PrivateKey::from_secret(/* … */)?;
+let recipient_pk  = recipient_sk.public_key();
+
+let authorizer_sk = PrivateKey::from_secret(/* … */)?;
+let authorizer_pk = authorizer_sk.public_key();
+
+let m   = PrivateKey::from_secret(/* the scalar to protect */)?;
+// `ctx` implements the `Context` trait — your integration binds each capsule
+// to its own transcript (package id, epoch, purpose …).
+let ctx = /* a value implementing Context */;
+
+// SEAL — Y* = recipient + authorizer  (both must act)
+let capsule = Capsule::builder(&amp;m, &amp;recipient_pk, &amp;ctx)
+    .access_key(&amp;authorizer_pk)
+    .seal()?;
+let bytes = capsule.to_canonical_bytes();          // store / replicate opaquely
+
+// … later, to recover …
+let capsule = Capsule::from_canonical_bytes(&amp;bytes)?;
+
+// confirm against the authorization → a capability token (captures ctx)
+let vc = capsule.verify(&amp;m.public_key(), &amp;recipient_pk, &amp;[authorizer_pk], &amp;ctx)?;
+
+let partial   = vc.contribute(&amp;authorizer_sk, &amp;authorizer_pk)?;  // the authorizer's share
+let recovered = vc.unseal(&amp;recipient_sk, &amp;[partial])?;           // == m</code></pre>
+</div></section>
+
+<section id="case"><div class="wrap">
+  <div class="kicker">Composition</div>
+  <h2>Splitting a secret</h2>
+  <p class="sub">A <code>Case</code> is the additive split of <em>one</em> secret to one recipient — the
+    DKG bundle. No party holds the whole secret; each dealer seals a single piece.</p>
+
+  <div class="formula">
+    <span class="a">M</span> &nbsp;=&nbsp; s·G &nbsp;=&nbsp; <span class="a">Σ<sub>j</sub> M<sub>j</sub></span>
+    <span class="cap">completeness is a sum of commitments — a missing or substituted piece breaks the equation</span>
+  </div>
+
+  <p>The recipient's whole secret is <code>s = Σ sⱼ</code>, with commitment <code>M = s·G</code> — a
+    certified public output of the DKG. So <code>Case::verify</code> takes one tuple and checks
+    <code>Σ Mⱼ == M</code>: completeness <em>and</em> correctness in a single equation — no roster and no
+    signature needed. <code>unseal</code> opens every piece and sums them back to <code>s</code>.</p>
+
+  <div class="filebar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>&nbsp; case.rs</div>
+<pre><code class="language-rust">impl Case {
+    pub fn new(capsules: Vec&lt;Capsule&gt;) -&gt; Result&lt;Case, Error&gt;;
+    pub fn canonical_bytes(&amp;self) -&gt; Vec&lt;u8&gt;;
+
+    /// One tuple. Checks uniformity, each piece's π, and Σ Mⱼ == commitment.
+    pub fn verify(&amp;self, expected_commitment: &amp;PublicKey, expected_recipient: &amp;PublicKey,
+                  expected_access_keys: &amp;[PublicKey], ctx: &amp;impl Context) -&gt; Result&lt;VerifiedCase, Error&gt;;
+}
+
+impl VerifiedCase {
+    pub fn contribute(&amp;self, key: &amp;PrivateKey, gate: &amp;PublicKey) -&gt; Result&lt;Vec&lt;Partial&gt;, Error&gt;;
+    pub fn unseal(&amp;self, recipient: &amp;PrivateKey, partials: &amp;[Partial]) -&gt; Result&lt;PrivateKey, Error&gt;;
+}</code></pre>
+</div></section>
+
+<section id="invariants"><div class="wrap">
+  <div class="kicker">Guarantees</div>
+  <h2>Crate invariants</h2>
+  <p class="sub">Cryptographic, not optional checks.</p>
+  <div class="inv">
+    <div class="card"><div class="badge">I1</div><h3>Recipient fixed at seal</h3>
+      <p>The recipient is baked into <code>Y*</code> at seal. A quorum consents to opening — it can never choose or redirect who receives the secret.</p></div>
+    <div class="card"><div class="badge">I3</div><h3>Opaque blob</h3>
+      <p>Outside the crate a capsule is a storage-only blob. Nothing is surfaced; even <code>verify</code> only confirms against values you supply.</p></div>
+    <div class="card"><div class="badge">I4</div><h3>Sealed by construction</h3>
+      <p>A <code>Capsule</code> can't exist unsealed — no public constructor, no derived deserialize. Every value is the output of a seal.</p></div>
+  </div>
+</div></section>
+
+<section id="security"><div class="wrap">
+  <div class="kicker">Threat model</div>
+  <h2>What holds, precisely</h2>
+  <ul class="sec">
+    <li><span class="mk">∑</span><div><b>All-or-nothing, strict AND.</b> Partials are bucketed per gate and checked <code>Σ wᵢ·G == Y_accessₖ</code> per group — every group must independently reach quorum. One short, and the ciphertext is as inert as untouched (computationally, under DDH).</div></li>
+    <li><span class="mk">#</span><div><b>The exact gate set is pinned.</b> Seal binds a canonical gate commitment <code>g*</code>, not just the sum — so a different key list with the same sum can't be substituted in.</div></li>
+    <li><span class="mk">↻</span><div><b>No accepted replay.</b> Each Partial's DLEQ binds the capsule core-hash, gate tag &amp; context — it can't be reused against a different capsule, gate, or context.</div></li>
+    <li><span class="mk">⊘</span><div><b>No Birkhoff in the crate.</b> The integration layer pre-weights each share to <code>wᵢ = βᵢ·sᵢ</code>; the recipient only adds points. The recipient is simply the last shareholder — distinguished by never releasing its own partial.</div></li>
+    <li><span class="mk">✓</span><div><b>Consent-gated.</b> <code>contribute</code> and <code>unseal</code> exist only on a <code>VerifiedCapsule</code>, closing the static-DH oracle: you never act on a capsule you haven't confirmed.</div></li>
+  </ul>
+</div></section>
+
+<footer><div class="wrap">
+  <span>ve-capsule — open source</span>
+  <span class="ghost">secp256k1 · EC-ElGamal · verifiable encryption</span>
+</div></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
+<script>try{hljs.highlightAll();}catch(e){}</script>
+</body>
+</html>
