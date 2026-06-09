@@ -141,7 +141,7 @@
     <span class="pill">EC-ElGamal · segmented</span>
     <span class="pill">no Birkhoff in-crate</span>
     <span class="pill">immutable capsule</span>
-    <span class="pill">9 public types</span>
+    <span class="pill">tight public surface</span>
   </div>
 </div></header>
 
@@ -177,8 +177,8 @@
 
 <section id="types"><div class="wrap">
   <div class="kicker">Surface</div>
-  <h2>Nine public types</h2>
-  <p class="sub">Concrete secp256k1 types throughout.</p>
+  <h2>The core types</h2>
+  <p class="sub">Concrete secp256k1 types throughout (the <code>Context</code> trait, <code>Params</code>, and the verb-traits round out the surface).</p>
   <div class="grid">
     <div class="card"><h3>Capsule</h3><p>The sealed, immutable ciphertext. Opaque outside the crate, and it never holds plaintext.</p></div>
     <div class="card"><h3>CapsuleBuilder<span class="tag">borrows m</span></h3><p>Collects the secret, recipient, context &amp; gates; <code>.seal()</code> yields the capsule.</p></div>
@@ -275,7 +275,6 @@ let recovered = vc.unseal(&amp;recipient_sk, &amp;[partial])?;           // == m
   <div class="filebar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>&nbsp; case.rs</div>
 <pre><code class="language-rust">impl Case {
     pub fn new(capsules: Vec&lt;Capsule&gt;) -&gt; Result&lt;Case, Error&gt;;
-    pub fn canonical_bytes(&amp;self) -&gt; Vec&lt;u8&gt;;
 
     /// One tuple. Checks uniformity, each piece's π, and Σ Mⱼ == commitment.
     pub fn verify(&amp;self, expected_commitment: &amp;PublicKey, expected_recipient: &amp;PublicKey,
