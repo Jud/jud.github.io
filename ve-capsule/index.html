@@ -14,6 +14,7 @@
     --bg:#faf8f3; --panel:#fffdf8; --ink:#1c1a17; --soft:#5f5a51; --faint:#938e82;
     --line:#e9e3d6; --accent:#b06329; --accent-2:#caa06a; --accent-soft:#f4e9d8;
     --code-bg:#fbf8f1; --ok:#3f7d52;
+    --warn-bg:#f8e6c4; --warn-line:#e6c485; --warn-ink:#6b4f24;
     --serif:"Fraunces",Georgia,"Times New Roman",serif;
     --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
@@ -22,7 +23,8 @@
   @media (prefers-color-scheme:dark){
     :root{ --bg:#14130e; --panel:#1b1a13; --ink:#ece7dc; --soft:#a8a294; --faint:#6e695c;
            --line:#2a281f; --accent:#d99a5c; --accent-2:#9a7b4a; --accent-soft:#241d12;
-           --code-bg:#191811; --ok:#7bb389; }
+           --code-bg:#191811; --ok:#7bb389;
+           --warn-bg:#241b0f; --warn-line:#473619; --warn-ink:#e3c590; }
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
@@ -34,6 +36,11 @@
   .wrap{max-width:43rem;margin:0 auto;padding:0 1.5rem}
   em{font-style:italic;color:var(--ink)}
   code,pre{font-family:var(--mono)}
+
+  /* warning banner */
+  .banner{background:var(--warn-bg);border-bottom:1px solid var(--warn-line);color:var(--warn-ink);
+    font-size:.83rem;line-height:1.45;text-align:center;padding:.55rem 1.2rem;letter-spacing:.005em}
+  .banner b{font-weight:600}
 
   /* nav */
   nav{position:sticky;top:0;z-index:10;backdrop-filter:saturate(1.15) blur(8px);
@@ -118,6 +125,8 @@
 </style>
 </head>
 <body>
+
+<div class="banner" role="note">🧪 <b>Research toy</b> — ve-capsule is experimental and unaudited. Don't use it to protect real keys yet.</div>
 
 <nav><div class="wrap">
   <svg class="mk" viewBox="0 0 72 72" fill="none" aria-hidden="true">
