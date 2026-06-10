@@ -279,9 +279,10 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
       secp256k1. Many verifiable-encryption constructions live elsewhere — a class group, a
       pairing-friendly curve, an RSA modulus — and ask your key material to take a detour through that
       world. ve-capsule stays native.</p>
-    <p>That alignment is the point: a <b>secp256k1-only secure element</b> can sole-custody the recovery
-      key, and the same signer that already protects your wallet can authorize a recovery — no second
-      curve, no class group, nothing extra to port to hardware or to trust.</p>
+    <p>That alignment is the point: it slots into a stack that already speaks secp256k1 — Bitcoin, FROST,
+      Taproot — reusing the same key types and signers, with no second curve, class group, or RSA modulus
+      to stand up beside it. A gated recovery is authorized by an ordinary secp256k1 quorum signature, the
+      same kind your threshold signer already produces.</p>
   </div>
 </section>
 
