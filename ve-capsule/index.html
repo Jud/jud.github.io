@@ -240,6 +240,10 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
           set, with room for other schemes.</p>
       </div>
     </div>
+    <p class="muted">Why a signature, and not just any bytes? A stripped core carries no proof — so on its
+      own an authorizer can't tell a genuine capsule from one an attacker fabricated to harvest a partial
+      decryption. The signature vouches that the core is real before anyone contributes, so an authorizer
+      can't be duped into opening an attacker's chosen ciphertext.</p>
   </div>
 </section>
 
