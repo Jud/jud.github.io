@@ -223,19 +223,21 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
   <div class="wrap">
     <div class="step">Two trust models</div>
     <h2>Recover alone, or only by quorum</h2>
-    <p>The same compact core opens two ways — you pick the one your threat model wants.</p>
+    <p>A compact core has dropped its proof — so something has to vouch for it. Two ways, and you pick
+      the one your threat model wants.</p>
     <div class="two">
       <div class="box">
         <h3>Recipient-only <span class="tag">self-securing</span></h3>
-        <p>No signature, no roster, nothing extra to keep. Recovery re-anchors on the certified target:
-          the reconstructed scalar's commitment must equal <code>M</code>, so a tampered or substituted
-          core fails closed. The recipient opens it with their key alone — the air-gapped backup.</p>
+        <p>Nothing extra to keep. Recovery re-anchors on the certified target: the reconstructed scalar's
+          commitment must equal <code>M</code>, so a tampered or substituted core fails closed. The
+          recipient opens it with their key alone — the air-gapped backup.</p>
       </div>
       <div class="box">
-        <h3>Quorum-gated <span class="tag">BIP-340</span></h3>
-        <p>Require another quorum to authorize release. A <code>FROST(secp256k1)-TR</code> signature over
-          the capsule's canonical statement promotes the core to a contributable token, verified in-crate
-          against the group's Taproot output key. Same curve, same signer.</p>
+        <h3>Signature-backed <span class="tag">open set</span></h3>
+        <p>A signature takes the place of the proof: a quorum signs the capsule's canonical statement,
+          promoting the core to a contributable token — "require another group to authorize release." The
+          crate verifies BIP-340 Schnorr today (FROST(secp256k1)-TR among them); the backing is an open
+          set, with room for other schemes.</p>
       </div>
     </div>
   </div>
