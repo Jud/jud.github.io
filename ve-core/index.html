@@ -101,10 +101,11 @@
           proof, over imaginary-quadratic class groups. pure rust, no gmp, no
           gpl.</li>
         <li><em>ec-segve</em>. segmented verifiable encryption on native
-          secp256k1: each scalar split into limbs under curve elgamal, with
-          base-b range proofs, an exact-integer carry chain, and a linking sigma
-          under one fiat-shamir challenge. native curve, so a hardware wallet can
-          seed-root the recipient key.</li>
+          secp256k1: each scalar split into limbs under curve elgamal, with one
+          aggregated bulletproofs++ range proof across every limb and carry, an
+          exact-integer carry chain, and a linking sigma on one fiat-shamir
+          transcript. native curve, so a hardware wallet can seed-root the
+          recipient key.</li>
       </ul>
 
       <h2>what makes it hold up</h2>

@@ -289,8 +289,15 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 
 <div class="wrap"><div class="deeper" id="hood">
   <h2>Under the hood</h2>
-  <p>ve-capsule is segmented EC-ElGamal verifiable encryption on secp256k1, with per-segment range
-    proofs and a batched DLEQ, made non-interactive by Fiat–Shamir. Every capsule binds to exactly its
+  <p>ve-capsule is segmented EC-ElGamal verifiable encryption on secp256k1: the sealed scalar is
+    encrypted in small segments, and a single aggregated <strong>Bulletproofs++</strong> range proof
+    covers every segment and carry in the statement at once, alongside a linking sigma and a batched
+    DLEQ, all on one Fiat–Shamir transcript. Bulletproofs++ is what keeps a whole capsule at a few
+    kilobytes and verification at a handful of multiscalar equations: the proof is logarithmic in the
+    statement and aggregated across it; the proven ranges are exact, so a capsule that verifies is a
+    capsule that decrypts; and there's no trusted setup — every generator is a nothing-up-my-sleeve
+    point each party re-derives locally (the EUROCRYPT 2024 construction, implemented with the
+    corrections from Cypher Stack's independent review). Every capsule binds to exactly its
     participants and its context, checkable by anyone without the secret. The surface is blob-in /
     blob-out: <code>#![forbid(unsafe_code)]</code>, secrets zeroize on drop, and the proof algebra stays
     crate-private so a caller can't reach past the consent-gated API. Sealing and unsealing aren't
