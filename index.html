@@ -31,13 +31,36 @@
             border-bottom: 1px solid #ddd; margin-bottom: 1.5rem; }
       nav .site-name { font-weight: bold; }
       nav .site-name a { text-decoration: none; color: black; }
-      nav .projects a { margin-left: 1em; }
+      nav .links a { margin-left: 1em; }
+
+      .dropdown { position: relative; display: inline-block; margin-left: 1em; }
+      .dropdown > a { cursor: default; }
+      .dropdown .menu { display: none; position: absolute; right: 0; top: 100%;
+            padding: .5em 0; margin: 0; list-style: none; min-width: 9em;
+            background: #fff; border: 1px solid #ddd;
+            box-shadow: 0 4px 14px rgba(0,0,0,.08); z-index: 10; }
+      .dropdown:hover .menu, .dropdown:focus-within .menu { display: block; }
+      .dropdown .menu a { display: block; padding: .25em 1em; margin: 0;
+            text-decoration: none; }
+      .dropdown .menu a:hover { background: #f4f4f4; }
     </style>
   </head>
   <body>
     <nav>
       <span class="site-name"><a href="/">Jud Stephenson</a></span>
-      <span class="projects"><a href="https://github.com/jud">github</a></span>
+      <span class="links">
+        <span class="dropdown">
+          <a href="#" aria-haspopup="true">projects ▾</a>
+          <ul class="menu">
+            <li><a href="/smelt/">smelt</a></li>
+            <li><a href="https://mkdn.ai">mkdn</a></li>
+            <li><a href="/operator/">operator</a></li>
+            <li><a href="/kokoro-coreml/">kokoro</a></li>
+            <li><a href="/ve-capsule/">ve-capsule</a></li>
+          </ul>
+        </span>
+        <a href="https://github.com/jud">github</a>
+      </span>
     </nav>
     <header>
       <div class="image-crop">
@@ -52,8 +75,8 @@
     <section class="main">
       <h1>Hey 👋, I'm Judson Stephenson. Most people call me Jud.</h1>
       <p>We live in an amazing time. So much to build and so many tokens to burn.</p>
-      <p>Most recently I was a Staff Engineer at <a href="https://block.xyz">Block</a> working on <a href="https://bitkey.world">Bitkey</a>. Before that I ran the ad platform at <a href="https://techcrunch.com/2021/02/02/uber-acquires-drizly/">Drizly</a> (acquired by Uber) and a <a href="https://airspace.io">product consultancy</a> helping startups find market fit. I've co-founded a <a href="https://nybex.com">bitcoin exchange</a>, a couple of bitcoin wallets, and a <a href="https://judsonco.com">wholesale distribution platform</a>. Grew up at eBay via <a href="https://techcrunch.com/2012/09/06/ebay-acquires-style-focused-social-curated-shopping-site-svpply/">Svpply</a>.</p>
       <p>Right now I'm building local-first tools: <a href="/smelt/">smelt</a>, a package manager for local agents — small models compiled into installable commands; <a href="https://mkdn.ai">mkdn</a>, the reading side of the agentic loop; <a href="/operator/">operator</a>, which lets you talk to your terminal; <a href="/kokoro-coreml/">kokoro</a>, neural speech on the Apple Neural Engine; and <a href="/ve-capsule/">ve-capsule</a>, verifiable encryption for secp256k1 key backups.</p>
+      <p>Most recently I was a Staff Engineer at <a href="https://block.xyz">Block</a> working on <a href="https://bitkey.world">Bitkey</a>. Before that I ran the ad platform at <a href="https://techcrunch.com/2021/02/02/uber-acquires-drizly/">Drizly</a> (acquired by Uber) and a <a href="https://airspace.io">product consultancy</a> helping startups find market fit. I've co-founded a <a href="https://nybex.com">bitcoin exchange</a>, a couple of bitcoin wallets, and a <a href="https://judsonco.com">wholesale distribution platform</a>. Grew up at eBay via <a href="https://techcrunch.com/2012/09/06/ebay-acquires-style-focused-social-curated-shopping-site-svpply/">Svpply</a>.</p>
     </section>
   </body>
 </html>
