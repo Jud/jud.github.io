@@ -155,6 +155,23 @@ section { padding: 64px 0; }
 .statement p { font-size: 19px; font-weight: 500; letter-spacing: -0.01em; max-width: 44ch; margin: 0 auto; }
 .statement .why { margin-top: 12px; font-size: 14px; color: var(--muted); max-width: 56ch; margin-left: auto; margin-right: auto; }
 
+/* model family cards */
+.cards.three { grid-template-columns: repeat(3, 1fr); }
+
+/* lifecycle steps */
+.steps { margin-top: 28px; background: var(--panel); border: 1px solid var(--border-soft); border-radius: 10px; overflow: hidden; }
+.step { display: grid; grid-template-columns: 44px 1fr minmax(0, 380px); gap: 18px; padding: 18px; align-items: baseline; }
+.step + .step { border-top: 1px solid var(--border-soft); }
+.step .no { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+.step h3 { font-size: 14.5px; font-weight: 600; }
+.step p { margin-top: 5px; font-size: 13px; color: var(--muted); line-height: 1.55; }
+.step .cmd {
+  font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+  background: var(--panel-2); border: 1px solid var(--border-soft); border-radius: 7px;
+  padding: 10px 12px; white-space: pre; overflow-x: auto; justify-self: stretch;
+}
+.step .cmd b { color: var(--text); font-weight: 500; }
+
 /* three pillars */
 .pillars { margin-top: 28px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .pillar { background: var(--panel); border: 1px solid var(--border-soft); border-radius: 10px; padding: 18px; }
@@ -175,7 +192,10 @@ footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wr
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; }
   .cards { grid-template-columns: 1fr 1fr; }
+  .cards.three { grid-template-columns: 1fr; }
   .pillars { grid-template-columns: 1fr; }
+  .step { grid-template-columns: 44px 1fr; }
+  .step .cmd { grid-column: 2; }
 }
 @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
 </style>
@@ -188,6 +208,8 @@ footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wr
     <div class="nav-links">
       <a href="#agents">Agents</a>
       <a href="#receipt">How it runs</a>
+      <a href="#models">Models</a>
+      <a href="#build">Build your own</a>
       <a href="https://github.com/Jud/smelt#readme">Docs</a>
       <a href="https://github.com/Jud/smelt">GitHub</a>
       <a href="https://www.jud.me/">jud.me</a>
@@ -223,27 +245,27 @@ footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wr
     <p class="sec-sub">
       A registry is a Hugging Face repo. Agents are ~46&nbsp;KB — the base model
       downloads once and is shared by every agent built on it.
-      <span style="color:var(--faint)">The launch catalog below lands with the
-      first public registry; triage runs today from the repo's demo.</span>
+      <span style="color:var(--faint)">Every install command below works today,
+      from the live registry.</span>
     </p>
     <div class="cards">
       <div class="card">
-        <div class="top"><span class="glyph">tr</span><div><div class="name">triage</div><div class="spec">smelt install triage@jud/agents</div></div></div>
+        <div class="top"><span class="glyph">tr</span><div><div class="name">triage</div><div class="spec">smelt install triage@judstephenson/agents</div></div></div>
         <div class="use"><span class="dot" style="background:var(--red)"></span>Reads a log line, returns severity, component, summary. <span class="mono" style="font-size:11px; color:var(--faint)">tail -f | triage | jq</span></div>
         <div class="stat"><b>98<i>ms</i></b><span>cold start → first token</span></div>
       </div>
       <div class="card">
-        <div class="top"><span class="glyph">cm</span><div><div class="name">commit</div><div class="spec">smelt install commit@jud/agents</div></div></div>
+        <div class="top"><span class="glyph">cm</span><div><div class="name">commit</div><div class="spec">smelt install commit@judstephenson/agents</div></div></div>
         <div class="use"><span class="dot" style="background:var(--green)"></span>Writes the commit message from your staged diff. Works on a plane.</div>
         <div class="stat"><b>46<i>KB</i></b><span>agent download size</span></div>
       </div>
       <div class="card">
-        <div class="top"><span class="glyph">rd</span><div><div class="name">redact</div><div class="spec">smelt install redact@jud/agents</div></div></div>
+        <div class="top"><span class="glyph">rd</span><div><div class="name">redact</div><div class="spec">smelt install redact@judstephenson/agents</div></div></div>
         <div class="use"><span class="dot" style="background:var(--amber)"></span>Strips PII before text leaves your machine. A cloud redactor can't make that promise.</div>
         <div class="stat"><b>0<i>bytes</i></b><span>sent anywhere, ever</span></div>
       </div>
       <div class="card">
-        <div class="top"><span class="glyph">ex</span><div><div class="name">extract</div><div class="spec">smelt install extract@jud/agents</div></div></div>
+        <div class="top"><span class="glyph">ex</span><div><div class="name">extract</div><div class="spec">smelt install extract@judstephenson/agents</div></div></div>
         <div class="use"><span class="dot" style="background:var(--green)"></span>Invoices, receipts, contacts → typed records. Schema-valid, so the pipe never breaks.</div>
         <div class="stat"><b>77<i>ms</i></b><span>install, base model cached</span></div>
       </div>
@@ -272,6 +294,83 @@ footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wr
         <div class="rrow"><span class="dot g"></span><span class="what">Already knew its job</span><span class="detail">— its instructions were baked in at build time, not re-read on every call</span><span class="val">saved 180 ms</span></div>
         <div class="rrow"><span class="dot g"></span><span class="what">Shared its model</span><span class="detail">— weights are deduplicated, so 2 installed agents ≈ the size of 1</span><span class="val">535 MB for 2 agents</span></div>
         <div class="rrow"><span class="dot n"></span><span class="what">Sent nothing anywhere</span><span class="detail">— no API, no telemetry; there is nothing to call home to</span><span class="val">0 connections</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="models" style="padding-bottom: 24px">
+  <div class="wrap">
+    <h2 class="sec-h">Three model families, compiled to the GPU</h2>
+    <p class="sec-sub">
+      Every agent is built on an open model that runs entirely on your Mac.
+      Supported is a contract here, not a vibe: each family ships with structure,
+      output-parity, and throughput gates that every release must pass.
+      <span style="color:var(--faint)">Decode speeds measured on an M2 Max.</span>
+    </p>
+    <div class="cards three">
+      <div class="card">
+        <div class="top"><span class="glyph">qw</span><div><div class="name">Qwen 3.5</div><div class="spec">0.8B · 2B · 4B</div></div></div>
+        <div class="use"><span class="dot" style="background:var(--green)"></span>The catalog default. Hybrid linear-attention models — the 0.8B is what makes agents feel instant.</div>
+        <div class="stat"><b>~300<i>tok/s</i></b><span>0.8B decode</span></div>
+      </div>
+      <div class="card">
+        <div class="top"><span class="glyph">g4</span><div><div class="name">Gemma 4</div><div class="spec">E2B · E4B</div></div></div>
+        <div class="use"><span class="dot" style="background:var(--green)"></span>Google's efficient small-model family. More headroom for harder jobs, still comfortably local.</div>
+        <div class="stat"><b>~154<i>tok/s</i></b><span>E2B decode</span></div>
+      </div>
+      <div class="card">
+        <div class="top"><span class="glyph">ll</span><div><div class="name">Llama 3.2</div><div class="spec">1B · 3B Instruct</div></div></div>
+        <div class="use"><span class="dot" style="background:var(--green)"></span>Meta's instruct-tuned small models — the baseline everything else gets compared to.</div>
+        <div class="stat"><b>≥80<i>tok/s</i></b><span>1B release gate floor</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="build" style="padding-top: 24px">
+  <div class="wrap">
+    <h2 class="sec-h">From a model to an installed agent</h2>
+    <p class="sec-sub">
+      The catalog agents aren't special — each one is a persona file and a JSON
+      schema sealed into a model. The same four commands take a model you choose
+      to an agent anyone can install by name.
+    </p>
+    <div class="steps">
+      <div class="step">
+        <span class="no">01</span>
+        <div>
+          <h3>Get a model</h3>
+          <p>Build a 4-bit quant straight from the original Hugging Face weights — or import a GGUF you already have, the format most local checkpoints ship in. Q4-family imports keep their original quantization.</p>
+        </div>
+        <div class="cmd"><b>smelt import</b> Qwen3.5-2B-Q4_K_M.gguf</div>
+      </div>
+      <div class="step">
+        <span class="no">02</span>
+        <div>
+          <h3>Seal in the job</h3>
+          <p>A persona, prefilled into the model's state so it costs nothing at run time, and a JSON schema, compiled into the decoder so the output parses by construction.</p>
+        </div>
+        <div class="cmd"><b>smelt bake</b> model.smeltpkg \
+  --system-file triage.txt \
+  --json-schema triage.json</div>
+      </div>
+      <div class="step">
+        <span class="no">03</span>
+        <div>
+          <h3>Run it like a program</h3>
+          <p>stdin in, schema-valid JSON out, ~100 ms cold with no daemon. Pipes, xargs, and cron work on day one.</p>
+        </div>
+        <div class="cmd">tail -1 error.log | <b>smelt run</b> triage | jq .severity</div>
+      </div>
+      <div class="step">
+        <span class="no">04</span>
+        <div>
+          <h3>Publish it</h3>
+          <p>Publishing writes a static registry — any Hugging Face repo can host it. The agent itself is tens of KB; installs share the base model already on the machine.</p>
+        </div>
+        <div class="cmd"><b>smelt publish</b> model.smeltpkg --name triage
+<b>smelt install</b> triage@you/agents</div>
       </div>
     </div>
   </div>
@@ -331,7 +430,7 @@ copyPill.addEventListener('click', async (e) => {
 
 const demo = document.getElementById('demo');
 const LINES = [
-  { html: `<span class="t-p">$</span> <span class="t-cmd" id="t1"></span>`, type: 'smelt install triage@jud/agents', at: 't1' },
+  { html: `<span class="t-p">$</span> <span class="t-cmd" id="t1"></span>`, type: 'smelt install triage@judstephenson/agents', at: 't1' },
   { html: `<span class="t-dim">Installed triage — 46 KB, base model shared (0.4s)</span>` },
   { html: `<span class="t-p">$</span> <span class="t-cmd" id="t2"></span>`, type: 'tail -1 error.log | smelt run triage | jq .', at: 't2' },
   { html: `{` },
