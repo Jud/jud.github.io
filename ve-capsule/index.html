@@ -296,8 +296,9 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
     kilobytes and verification at a handful of multiscalar equations: the proof is logarithmic in the
     statement and aggregated across it; the proven ranges are exact, so a capsule that verifies is a
     capsule that decrypts; and there's no trusted setup — every generator is a nothing-up-my-sleeve
-    point each party re-derives locally (the EUROCRYPT 2024 construction, implemented with the
-    corrections from Cypher Stack's independent review). Every capsule binds to exactly its
+    point each party re-derives locally (the <a href="https://eprint.iacr.org/2022/510">EUROCRYPT 2024
+    construction</a>, implemented with the corrections from
+    <a href="https://github.com/cypherstack/bppp-review">Cypher Stack's independent review</a>). Every capsule binds to exactly its
     participants and its context, checkable by anyone without the secret. The surface is blob-in /
     blob-out: <code>#![forbid(unsafe_code)]</code>, secrets zeroize on drop, and the proof algebra stays
     crate-private so a caller can't reach past the consent-gated API. Sealing and unsealing aren't
