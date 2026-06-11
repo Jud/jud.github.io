@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smelt — the package manager for local agents</title>
+<meta name="description" content="Install agents like programs. They start in 100ms, emit JSON that parses by construction, and never send your data anywhere.">
+<meta property="og:title" content="Smelt — the package manager for local agents">
+<meta property="og:description" content="Install agents like programs, not services. ~100ms cold start, JSON by construction, local-first by design.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.jud.me/smelt/">
+<link rel="canonical" href="https://www.jud.me/smelt/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0a0b'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%233fb950'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0b;
+  --panel: #101012;
+  --panel-2: #141417;
+  --border: #222226;
+  --border-soft: #1a1a1e;
+  --text: #ececef;
+  --muted: #8f8f96;
+  --faint: #5d5d64;
+  --green: #3fb950;
+  --amber: #d29922;
+  --red: #f85149;
+  --sans: 'Instrument Sans', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: #2e2e36; }
+a { color: inherit; }
+.wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+code, .mono { font-family: var(--mono); }
+
+/* nav */
+nav { border-bottom: 1px solid var(--border-soft); }
+.nav-inner { display: flex; align-items: center; height: 58px; gap: 28px; }
+.brand { font-weight: 600; font-size: 16px; text-decoration: none; letter-spacing: -0.01em; }
+.nav-links { display: flex; gap: 22px; margin-left: auto; }
+.nav-links a { font-size: 13.5px; color: var(--muted); text-decoration: none; }
+.nav-links a:hover { color: var(--text); }
+.pill {
+  font-size: 13px; font-weight: 500; text-decoration: none;
+  padding: 7px 14px; border-radius: 999px;
+}
+.pill-white { background: #fff; color: #0a0a0b; }
+.pill-white:hover { background: #e4e4e7; }
+.pill-ghost { border: 1px solid var(--border); color: var(--text); }
+.pill-ghost:hover { border-color: #3a3a40; }
+
+/* hero */
+.hero { padding-top: 88px; padding-bottom: 72px; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.25; max-width: 18ch; }
+.hero-sub { margin-top: 14px; color: var(--muted); font-size: 15px; max-width: 46ch; }
+.hero-ctas { margin-top: 26px; display: flex; gap: 10px; align-items: center; }
+.hero-note { margin-top: 14px; font-size: 12.5px; color: var(--faint); }
+
+/* terminal panel */
+.term {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: var(--mono); font-size: 12px; line-height: 1.95;
+  overflow: hidden;
+}
+.term-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-bottom: 1px solid var(--border-soft);
+  font-size: 11.5px; color: var(--faint); font-family: var(--mono);
+}
+.term-body { padding: 16px 18px; white-space: pre; overflow-x: auto; }
+.t-p { color: var(--faint); }
+.t-cmd { color: var(--text); }
+.t-dim { color: var(--faint); }
+.t-k { color: #79c0ff; }
+.t-s { color: #a5d6a1; }
+.cursor { display: inline-block; width: 7px; height: 13px; vertical-align: -2px; background: var(--text); animation: blink 1.1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* sections */
+section { padding: 64px 0; }
+.sec-h { font-size: 22px; font-weight: 600; letter-spacing: -0.015em; }
+.sec-sub { margin-top: 8px; color: var(--muted); font-size: 14.5px; max-width: 62ch; }
+
+/* agent catalog grid */
+.cards { margin-top: 28px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 16px 16px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+  transition: border-color 0.15s;
+}
+.card:hover { border-color: var(--border); }
+.card .top { display: flex; align-items: center; gap: 9px; }
+.card .glyph {
+  width: 26px; height: 26px; border-radius: 6px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  background: var(--panel-2); border: 1px solid var(--border-soft);
+  color: var(--muted);
+}
+.card .name { font-weight: 600; font-size: 14px; }
+.card .spec { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+.card .use { font-size: 12.5px; color: var(--muted); line-height: 1.5; min-height: 56px; }
+.card .use .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+.card .stat { display: flex; align-items: baseline; gap: 8px; border-top: 1px solid var(--border-soft); padding-top: 12px; }
+.card .stat b { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+.card .stat b i { font-style: normal; font-size: 13px; color: var(--muted); margin-left: 1px; }
+.card .stat span { margin-left: auto; font-size: 11.5px; color: var(--muted); }
+
+/* receipt (the artifact block) */
+.receipt { margin-top: 28px; background: var(--panel); border: 1px solid var(--border-soft); border-radius: 10px; overflow: hidden; }
+.receipt .head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 18px; border-bottom: 1px solid var(--border-soft);
+  font-size: 13px; color: var(--muted);
+}
+.receipt .head .chip {
+  font-size: 11px; font-family: var(--mono); color: var(--muted);
+  border: 1px solid var(--border); border-radius: 999px; padding: 1px 9px;
+}
+.receipt .head .right { margin-left: auto; font-size: 12.5px; color: var(--faint); }
+.receipt .body { padding: 16px 18px 18px; }
+.receipt .title { font-weight: 600; font-size: 14.5px; }
+.receipt .sub { font-size: 12.5px; color: var(--faint); margin-bottom: 14px; }
+.rrow { display: flex; gap: 10px; padding: 7px 0; font-size: 13.5px; align-items: baseline; }
+.rrow + .rrow { border-top: 1px solid var(--border-soft); }
+.rrow .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; align-self: center; }
+.rrow .what { color: var(--text); }
+.rrow .detail { color: var(--faint); font-size: 12.5px; }
+.rrow .val { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.g { background: var(--green); } .a { background: var(--amber); } .n { background: var(--faint); }
+
+/* quiet statement */
+.statement {
+  margin: 8px 0;
+  background: var(--panel); border: 1px solid var(--border-soft); border-radius: 12px;
+  padding: 72px 32px; text-align: center;
+}
+.statement p { font-size: 19px; font-weight: 500; letter-spacing: -0.01em; max-width: 44ch; margin: 0 auto; }
+.statement .why { margin-top: 12px; font-size: 14px; color: var(--muted); max-width: 56ch; margin-left: auto; margin-right: auto; }
+
+/* three pillars */
+.pillars { margin-top: 28px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.pillar { background: var(--panel); border: 1px solid var(--border-soft); border-radius: 10px; padding: 18px; }
+.pillar .cat { font-size: 11px; letter-spacing: 0.08em; color: var(--faint); margin-bottom: 10px; }
+.pillar h3 { font-size: 14.5px; font-weight: 600; line-height: 1.45; }
+.pillar p { margin-top: 8px; font-size: 13px; color: var(--muted); line-height: 1.55; }
+.pillar p .mono { font-size: 11.5px; color: var(--faint); }
+
+/* footer */
+footer {
+  border-top: 1px solid var(--border-soft); margin-top: 24px;
+  padding: 26px 0 40px; font-size: 12.5px; color: var(--faint);
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--text); }
+footer .wrap { display: contents; }
+
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; }
+  .cards { grid-template-columns: 1fr 1fr; }
+  .pillars { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-inner">
+    <a class="brand" href="https://www.jud.me/smelt/">Smelt</a>
+    <div class="nav-links">
+      <a href="#agents">Agents</a>
+      <a href="#receipt">How it runs</a>
+      <a href="https://github.com/Jud/smelt#readme">Docs</a>
+      <a href="https://github.com/Jud/smelt">GitHub</a>
+    </div>
+    <a class="pill pill-white" href="https://github.com/Jud/smelt#install">Get started</a>
+  </div>
+</nav>
+
+<header class="wrap hero">
+  <div>
+    <h1>Install agents like programs, not services.</h1>
+    <p class="hero-sub">
+      Smelt compiles a small model, a prompt, and a JSON schema into one sealed
+      artifact that runs entirely on your machine. It starts in ~100&nbsp;ms
+      with no daemon, its output parses by construction, and once installed it
+      works offline, forever — no API keys, no telemetry, no cloud.
+    </p>
+    <div class="hero-ctas">
+      <a class="pill pill-white" href="#" id="copy-install">brew install smelt</a>
+      <a class="pill pill-ghost" href="#agents">See example agents</a>
+    </div>
+    <p class="hero-note">Local-first by construction: stdin → stdout is the entire data path. Apple Silicon · no Python.</p>
+  </div>
+  <div class="term">
+    <div class="term-head">zsh</div>
+    <div class="term-body" id="demo"></div>
+  </div>
+</header>
+
+<section id="agents">
+  <div class="wrap">
+    <h2 class="sec-h">Agents, installed by name</h2>
+    <p class="sec-sub">
+      A registry is a Hugging Face repo. Agents are ~46&nbsp;KB — the base model
+      downloads once and is shared by every agent built on it.
+      <span style="color:var(--faint)">The launch catalog below lands with the
+      first public registry; triage runs today from the repo's demo.</span>
+    </p>
+    <div class="cards">
+      <div class="card">
+        <div class="top"><span class="glyph">tr</span><div><div class="name">triage</div><div class="spec">smelt install triage@jud/agents</div></div></div>
+        <div class="use"><span class="dot" style="background:var(--red)"></span>Reads a log line, returns severity, component, summary. <span class="mono" style="font-size:11px; color:var(--faint)">tail -f | triage | jq</span></div>
+        <div class="stat"><b>98<i>ms</i></b><span>cold start → first token</span></div>
+      </div>
+      <div class="card">
+        <div class="top"><span class="glyph">cm</span><div><div class="name">commit</div><div class="spec">smelt install commit@jud/agents</div></div></div>
+        <div class="use"><span class="dot" style="background:var(--green)"></span>Writes the commit message from your staged diff. Works on a plane.</div>
+        <div class="stat"><b>46<i>KB</i></b><span>agent download size</span></div>
+      </div>
+      <div class="card">
+        <div class="top"><span class="glyph">rd</span><div><div class="name">redact</div><div class="spec">smelt install redact@jud/agents</div></div></div>
+        <div class="use"><span class="dot" style="background:var(--amber)"></span>Strips PII before text leaves your machine. A cloud redactor can't make that promise.</div>
+        <div class="stat"><b>0<i>bytes</i></b><span>sent anywhere, ever</span></div>
+      </div>
+      <div class="card">
+        <div class="top"><span class="glyph">ex</span><div><div class="name">extract</div><div class="spec">smelt install extract@jud/agents</div></div></div>
+        <div class="use"><span class="dot" style="background:var(--green)"></span>Invoices, receipts, contacts → typed records. Schema-valid, so the pipe never breaks.</div>
+        <div class="stat"><b>77<i>ms</i></b><span>install, base model cached</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="receipt" style="padding-top: 12px">
+  <div class="wrap">
+    <h2 class="sec-h">Every run is accountable</h2>
+    <p class="sec-sub">
+      Run an agent and this is the whole story. Output goes to stdout,
+      diagnostics to stderr, and every cost is measured — promises you can
+      check, not claims you have to trust.
+    </p>
+    <div class="receipt">
+      <div class="head">
+        <span class="mono" style="color:var(--text); font-size:12.5px">$ tail -1 error.log | <b style="font-weight:600">smelt run triage</b> | jq .severity</span>
+        <span class="right">exit 0 · 0.41 s total</span>
+      </div>
+      <div class="body">
+        <div class="title">What that one command did</div>
+        <div class="sub">measured on an M2 Max, release build — reproducible from the repo</div>
+        <div class="rrow"><span class="dot g"></span><span class="what">Produced valid JSON</span><span class="detail">— the schema is compiled in; invalid output is impossible, no retries</span><span class="val">cost: 2.5% speed</span></div>
+        <div class="rrow"><span class="dot g"></span><span class="what">Answered immediately</span><span class="detail">— no daemon was running; everything was precompiled into the artifact</span><span class="val">first token in 98 ms</span></div>
+        <div class="rrow"><span class="dot g"></span><span class="what">Already knew its job</span><span class="detail">— its instructions were baked in at build time, not re-read on every call</span><span class="val">saved 180 ms</span></div>
+        <div class="rrow"><span class="dot g"></span><span class="what">Shared its model</span><span class="detail">— weights are deduplicated, so 2 installed agents ≈ the size of 1</span><span class="val">535 MB for 2 agents</span></div>
+        <div class="rrow"><span class="dot n"></span><span class="what">Sent nothing anywhere</span><span class="detail">— no API, no telemetry; there is nothing to call home to</span><span class="val">0 connections</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="statement">
+    <p>Small models are fast enough to be programs.<br>Smelt treats them like programs.</p>
+    <p class="why">Pipes are composition, xargs is parallelism, cron is scheduling. Fifty years of shell tooling works on day one — because as far as the shell can tell, an agent is just another process.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="pillars">
+      <div class="pillar">
+        <div class="cat">LATENCY</div>
+        <h3>No daemon. A process that forks in 100&nbsp;ms.</h3>
+        <p>Everything expensive — shaders, tokenizer, grammar, prompt — compiles at build time into the artifact. The runtime maps the file and goes. Warm repeats hit ~50&nbsp;ms with <span class="mono">--linger</span>.</p>
+      </div>
+      <div class="pillar">
+        <div class="cat">STRUCTURE</div>
+        <h3>JSON that parses by construction.</h3>
+        <p>The schema is compiled into the package as an llguidance token trie; invalid tokens are masked during decode. <span class="mono">jq</span> downstream can't be handed garbage — and it costs 2.5%, not a retry loop.</p>
+      </div>
+      <div class="pillar">
+        <div class="cat">LOCAL-FIRST</div>
+        <h3>Yours after the install, forever.</h3>
+        <p>Weights, grammar, and prompt live in one artifact on your disk. It works on a plane, survives the registry disappearing, and never phones home — which is why agents like <span class="mono">redact</span> are credible locally and self-defeating in the cloud.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Smelt — Swift 6 · Metal · llguidance · MIT · Qwen 3.5, Gemma 4, Llama 3.2</span>
+    <span><a href="https://github.com/Jud/smelt">GitHub</a> · <a href="https://www.jud.me">jud.me</a></span>
+  </div>
+</footer>
+
+<script>
+// the install pill copies the real command
+const copyPill = document.getElementById('copy-install');
+copyPill.addEventListener('click', async (e) => {
+  e.preventDefault();
+  const cmd = 'brew tap Jud/smelt https://github.com/Jud/smelt.git && brew install --HEAD Jud/smelt/smelt';
+  try {
+    await navigator.clipboard.writeText(cmd);
+    const prev = copyPill.textContent;
+    copyPill.textContent = 'copied install command';
+    setTimeout(() => { copyPill.textContent = prev; }, 1400);
+  } catch {
+    location.href = 'https://github.com/Jud/smelt#install';
+  }
+});
+
+const demo = document.getElementById('demo');
+const LINES = [
+  { html: `<span class="t-p">$</span> <span class="t-cmd" id="t1"></span>`, type: 'smelt install triage@jud/agents', at: 't1' },
+  { html: `<span class="t-dim">Installed triage — 46 KB, base model shared (0.4s)</span>` },
+  { html: `<span class="t-p">$</span> <span class="t-cmd" id="t2"></span>`, type: 'tail -1 error.log | smelt run triage | jq .', at: 't2' },
+  { html: `{` },
+  { html: `  <span class="t-k">"severity"</span>: <span class="t-s">"page"</span>,` },
+  { html: `  <span class="t-k">"component"</span>: <span class="t-s">"checkout-api"</span>,` },
+  { html: `  <span class="t-k">"summary"</span>: <span class="t-s">"db pool exhausted; p99 timeouts"</span>` },
+  { html: `}` },
+  { html: `<span class="t-p">$</span> <span class="cursor"></span>` },
+];
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function addLine(i) {
+  if (i >= LINES.length) return;
+  const line = LINES[i];
+  const div = document.createElement('div');
+  div.innerHTML = line.html;
+  demo.appendChild(div);
+  if (line.type && !reduced) {
+    const target = document.getElementById(line.at);
+    let j = 0;
+    (function tick() {
+      if (j < line.type.length) {
+        target.textContent += line.type[j++];
+        setTimeout(tick, 15 + Math.random() * 24);
+      } else setTimeout(() => addLine(i + 1), 240);
+    })();
+  } else if (line.type) {
+    document.getElementById(line.at).textContent = line.type;
+    addLine(i + 1);
+  } else {
+    setTimeout(() => addLine(i + 1), reduced ? 0 : 80);
+  }
+}
+setTimeout(() => addLine(0), 400);
+</script>
+</body>
+</html>
