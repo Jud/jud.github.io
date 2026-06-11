@@ -3,315 +3,356 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ve-capsule — verifiable encryption on secp256k1</title>
-<meta name="description" content="ve-capsule seals a secp256k1 key to a recipient with a short proof anyone can check without opening it — gate recovery behind a quorum, and compact a whole distributed-key backup to a tag-sized artifact.">
+<title>ve-capsule — sealed by one, proved by anyone, opened by another</title>
+<meta name="description" content="ve-capsule seals a secp256k1 key into opaque bytes that prove what they hold. The sealer, the verifier, and the unsealer are three different parties — escrow without the trusted middleman.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" fill="none"><rect x="9" y="9" width="54" height="54" rx="13" stroke="%23b4682b" stroke-width="6"/><rect x="20" y="24" width="32" height="7" rx="3.5" fill="%23b4682b"/><rect x="20" y="35" width="32" height="7" rx="3.5" fill="%23b4682b"/><rect x="20" y="46" width="32" height="7" rx="3.5" fill="%23b4682b"/></svg>'>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><rect x="10" y="25" width="52" height="22" rx="11" fill="%23a03123"/><rect x="35" y="25" width="2" height="22" fill="%23f6f5f1"/></svg>'>
 <style>
   :root{
-    --bg:#faf8f3; --panel:#fffdf8; --ink:#1c1a17; --soft:#5f5a51; --faint:#938e82;
-    --line:#e9e3d6; --accent:#b06329; --accent-2:#caa06a; --accent-soft:#f4e9d8;
-    --code-bg:#fbf8f1; --ok:#3f7d52;
-    --warn-bg:#f8e6c4; --warn-line:#e6c485; --warn-ink:#6b4f24;
-    --serif:"Fraunces",Georgia,"Times New Roman",serif;
-    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --bg:#f6f5f1; --panel:#fdfcf9; --ink:#16140f; --soft:#6e6961; --faint:#9b968c;
+    --line:#e3e0d8; --wax:#a03123;
+    --sans:"Schibsted Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
     --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
     color-scheme:light dark;
   }
   @media (prefers-color-scheme:dark){
-    :root{ --bg:#14130e; --panel:#1b1a13; --ink:#ece7dc; --soft:#a8a294; --faint:#6e695c;
-           --line:#2a281f; --accent:#d99a5c; --accent-2:#9a7b4a; --accent-soft:#241d12;
-           --code-bg:#191811; --ok:#7bb389;
-           --warn-bg:#241b0f; --warn-line:#473619; --warn-ink:#e3c590; }
+    :root{ --bg:#131210; --panel:#1a1916; --ink:#eae6de; --soft:#a39d92; --faint:#6b665c;
+           --line:#282621; --wax:#d96a52; }
   }
   *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+  html{-webkit-text-size-adjust:100%}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
-    font-size:17px;line-height:1.62;letter-spacing:.005em;-webkit-font-smoothing:antialiased}
-  ::selection{background:var(--accent-soft)}
-  a{color:var(--accent);text-decoration:none}
-  a:hover{text-decoration:underline;text-underline-offset:3px}
-  .wrap{max-width:43rem;margin:0 auto;padding:0 1.5rem}
-  em{font-style:italic;color:var(--ink)}
+    font-size:17px;line-height:1.6;letter-spacing:.002em;-webkit-font-smoothing:antialiased}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.04;
+    mix-blend-mode:multiply;
+    background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2"/></filter><rect width="160" height="160" filter="url(%23n)"/></svg>')}
+  @media (prefers-color-scheme:dark){body::after{mix-blend-mode:overlay;opacity:.05}}
+  ::selection{background:var(--wax);color:var(--bg)}
+  a{color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--faint);text-decoration-thickness:1px}
+  a:hover{color:var(--wax);text-decoration-color:var(--wax)}
+  .wrap{max-width:66rem;margin:0 auto;padding:0 1.6rem}
   code,pre{font-family:var(--mono)}
+  .k-label{font-family:var(--mono);font-size:.72rem;font-weight:500;letter-spacing:.15em;
+    text-transform:uppercase;color:var(--faint)}
 
-  /* warning banner */
-  .banner{background:var(--warn-bg);border-bottom:1px solid var(--warn-line);color:var(--warn-ink);
-    font-size:.83rem;line-height:1.45;text-align:center;padding:.55rem 1.2rem;letter-spacing:.005em}
-  .banner b{font-weight:600}
+  /* banner */
+  .banner{font-family:var(--mono);font-size:.74rem;letter-spacing:.02em;color:var(--soft);
+    text-align:center;padding:.6rem 1.2rem;border-bottom:1px solid var(--line)}
+  .banner b{font-weight:600;color:var(--ink)}
 
   /* nav */
-  nav{position:sticky;top:0;z-index:10;backdrop-filter:saturate(1.15) blur(8px);
-    background:color-mix(in srgb,var(--bg) 84%,transparent);border-bottom:1px solid var(--line)}
-  nav .wrap{display:flex;align-items:center;gap:.7rem;height:3.4rem}
+  nav{position:sticky;top:0;z-index:10;backdrop-filter:saturate(1.1) blur(8px);
+    background:color-mix(in srgb,var(--bg) 86%,transparent);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:.55rem;height:3.4rem}
+  nav .pill-mk{width:1.25rem;height:.62rem;border-radius:.31rem;background:var(--wax);position:relative;flex:none}
+  nav .pill-mk::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1.5px;background:var(--bg)}
   nav .name{font-weight:600;letter-spacing:-.01em}
-  nav .mk{width:1.15rem;height:1.15rem;color:var(--accent)}
-  nav .links{margin-left:auto;display:flex;gap:1.3rem;font-size:.85rem}
-  nav .links a{color:var(--soft)}
-  nav .links a:hover{color:var(--ink);text-decoration:none}
-  @media (max-width:640px){nav .links{display:none}}
+  nav .links{margin-left:auto;display:flex;gap:1.4rem;font-family:var(--mono);font-size:.78rem}
+  nav .links a{color:var(--soft);text-decoration:none}
+  nav .links a:hover{color:var(--wax)}
+  @media (max-width:640px){nav .links a.opt{display:none}}
 
   /* hero */
-  header{padding:5.2rem 0 1.2rem;text-align:left}
-  .eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--accent);font-weight:500;margin-bottom:1.4rem}
-  h1{font-family:var(--serif);font-weight:500;font-size:3.7rem;line-height:1.04;letter-spacing:-.018em;
-    margin:0 0 1.3rem;font-optical-sizing:auto}
-  h1 .i{font-style:italic;color:var(--accent)}
-  .lede{font-size:1.2rem;color:var(--soft);max-width:34rem;margin:0}
+  header{padding:6rem 0 4.5rem}
+  .eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--soft);margin-bottom:2rem}
+  h1{font-weight:500;font-size:clamp(2.8rem,8.2vw,6.2rem);line-height:1.01;letter-spacing:-.035em;margin:0}
+  h1 .hl{display:block}
+  .lede{font-size:1.18rem;line-height:1.55;color:var(--soft);max-width:38rem;margin:2.2rem 0 0}
   .lede b{color:var(--ink);font-weight:600}
-  @media (max-width:640px){h1{font-size:2.6rem}.lede{font-size:1.08rem}header{padding:3.4rem 0 .5rem}}
+  .facts{font-family:var(--mono);font-size:.76rem;color:var(--faint);margin-top:2.4rem;letter-spacing:.02em}
+  @media (max-width:640px){header{padding:3.6rem 0 3rem}.lede{font-size:1.05rem}}
 
-  .pills{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1.9rem}
-  .pill{font-family:var(--mono);font-size:.74rem;color:var(--soft);background:var(--panel);
-    border:1px solid var(--line);border-radius:999px;padding:.3rem .7rem}
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  .hl,.lede,.facts,.rail{opacity:0;animation:rise .7s cubic-bezier(.2,.7,.3,1) forwards}
+  .hl:nth-child(1){animation-delay:.05s}.hl:nth-child(2){animation-delay:.15s}.hl:nth-child(3){animation-delay:.25s}
+  .lede{animation-delay:.45s}.facts{animation-delay:.55s}.rail{animation-delay:.7s}
 
-  section{padding:3rem 0;border-top:1px solid var(--line)}
-  section:first-of-type{border-top:none}
-  .step{font-family:var(--mono);font-size:.74rem;font-weight:500;letter-spacing:.13em;
-    text-transform:uppercase;color:var(--accent)}
-  h2{font-family:var(--serif);font-weight:500;font-size:1.85rem;letter-spacing:-.012em;margin:.55rem 0 0}
-  p{margin:1rem 0 0;color:var(--ink)}
-  p.muted{color:var(--soft);font-size:.97rem}
-  section p:first-of-type{margin-top:.85rem}
+  /* ── the rail: sealer → verifier → unsealer ─────────────────────────── */
+  .rail{margin-top:5.5rem}
+  .track{position:relative;height:1px;background:var(--line);margin:2.4rem 0 1.6rem}
+  .tick{position:absolute;top:-5px;width:1px;height:11px;background:var(--faint)}
+  .tick.t1{left:0}.tick.t2{left:50%}.tick.t3{right:0}
+  .pulse{position:absolute;top:50%;left:50%;width:62px;height:62px;margin:-31px 0 0 -31px;
+    border:1px solid var(--wax);border-radius:50%;opacity:0;
+    animation:pulse 14s cubic-bezier(.4,0,.4,1) infinite}
+  @keyframes pulse{0%,37%{opacity:0;transform:scale(.45)}44%{opacity:.7}
+    57%{opacity:0;transform:scale(1.2)}100%{opacity:0;transform:scale(1.2)}}
+  .traveler{position:absolute;top:50%;left:0;width:46px;height:24px;margin:-12px 0 0 -23px;
+    animation:travel 14s cubic-bezier(.65,0,.35,1) infinite}
+  .half{position:absolute;top:0;width:22.5px;height:24px;background:var(--wax)}
+  .half.hl-cap{left:0;border-radius:12px 2px 2px 12px;animation:partL 14s cubic-bezier(.65,0,.35,1) infinite}
+  .half.hr-cap{right:0;border-radius:2px 12px 12px 2px;animation:partR 14s cubic-bezier(.65,0,.35,1) infinite}
+  .dot{position:absolute;top:50%;left:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;
+    border-radius:50%;background:var(--ink);transform:scale(0);
+    animation:secret 14s cubic-bezier(.2,.7,.3,1) infinite}
+  @keyframes travel{
+    0%{left:0;opacity:0} 3%{opacity:1} 22%{left:0}
+    34%{left:50%} 58%{left:50%}
+    70%{left:100%} 93%{left:100%;opacity:1} 100%{left:100%;opacity:0}}
+  @keyframes partL{0%,74%{transform:translateX(0)}82%,100%{transform:translateX(-14px)}}
+  @keyframes partR{0%,74%{transform:translateX(0)}82%,100%{transform:translateX(14px)}}
+  @keyframes secret{0%,76%{transform:scale(0)}84%,100%{transform:scale(1)}}
+  .stations{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2.4rem}
+  .st .k-label{color:var(--wax)}
+  .st p{font-size:.92rem;line-height:1.55;color:var(--soft);margin:.55rem 0 0;max-width:17rem}
+  .st.mid{text-align:center}.st.mid p{margin-left:auto;margin-right:auto}
+  .st.end{text-align:right}.st.end p{margin-left:auto}
+  @media (max-width:680px){
+    .track{display:none}
+    .stations{grid-template-columns:1fr;gap:1.5rem}
+    .st.mid,.st.end{text-align:left}
+    .st.mid p,.st.end p{margin-left:0;margin-right:0}
+    .st{border-left:1px solid var(--line);padding-left:1.1rem}
+    .rail{margin-top:3rem}
+  }
 
-  /* code */
-  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:11px;
-    padding:1.05rem 1.15rem;margin:1.4rem 0 0;overflow-x:auto;font-size:13.5px;line-height:1.62;color:var(--ink)}
-  pre .c{color:var(--faint)} pre .k{color:var(--accent)} pre .t{color:var(--accent-2)}
-  p code{background:var(--code-bg);border:1px solid var(--line);border-radius:5px;padding:.05em .36em;font-size:.84em}
+  /* sections */
+  section{border-top:1px solid var(--line);padding:4.5rem 0}
+  .sec{display:grid;grid-template-columns:11rem minmax(0,40rem);gap:2.5rem}
+  .sec > div{min-width:0}
+  .sec > .k-label{position:sticky;top:4.8rem;align-self:start}
+  @media (max-width:840px){.sec{grid-template-columns:1fr;gap:1.1rem}.sec > .k-label{position:static}}
+  h2{font-weight:500;font-size:1.7rem;letter-spacing:-.018em;line-height:1.2;margin:0}
+  p{margin:1rem 0 0}
+  p.muted{color:var(--soft);font-size:.95rem}
+  h3{font-family:var(--mono);font-size:.78rem;font-weight:600;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink);margin:2.6rem 0 0}
+  h3 .n{color:var(--wax);margin-right:.5rem}
+  h3 + p{margin-top:.6rem}
 
-  /* lifecycle */
-  .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-top:1.5rem}
-  .flow .c{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:.95rem .9rem;position:relative}
-  .flow .n{font-family:var(--mono);font-size:.72rem;color:var(--accent);font-weight:500}
-  .flow .v{font-family:var(--mono);font-weight:600;font-size:.95rem;margin:.45rem 0 .35rem}
-  .flow .d{font-size:.8rem;color:var(--soft);line-height:1.45}
-  .flow .c:not(:last-child)::after{content:"→";position:absolute;right:-.62rem;top:50%;
-    transform:translateY(-50%);color:var(--faint);font-size:.85rem;z-index:2}
-  @media (max-width:640px){.flow{grid-template-columns:1fr 1fr}.flow .c:nth-child(2)::after,.flow .c::after{content:""}}
+  /* code — monochrome */
+  pre{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:1rem 1.15rem;margin:1.2rem 0 0;overflow-x:auto;font-size:13px;line-height:1.65;color:var(--ink)}
+  pre .c{color:var(--faint)} pre .k{font-weight:600} pre .t{color:var(--soft)}
+  p code,li code{background:var(--panel);border:1px solid var(--line);border-radius:5px;
+    padding:.05em .36em;font-size:.84em}
 
-  /* size stat */
-  .stat{display:flex;flex-wrap:wrap;align-items:baseline;gap:.6rem 1.4rem;margin-top:1.5rem;
-    background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:1.4rem 1.5rem}
-  .stat .from{font-family:var(--mono);font-size:1rem;color:var(--faint);text-decoration:line-through;text-decoration-thickness:1px}
+  /* scenario list */
+  .uses{list-style:none;margin:1.6rem 0 0;padding:0}
+  .uses li{border-top:1px solid var(--line);padding:1.1rem 0;display:grid;
+    grid-template-columns:9.5rem 1fr;gap:1.2rem}
+  .uses li:last-child{border-bottom:1px solid var(--line)}
+  .uses .u{font-weight:600;font-size:.95rem;letter-spacing:-.01em}
+  .uses .d{color:var(--soft);font-size:.95rem;line-height:1.55;margin:0}
+  @media (max-width:560px){.uses li{grid-template-columns:1fr;gap:.25rem}}
+
+  /* compact stat */
+  .stat{display:flex;flex-wrap:wrap;align-items:center;gap:.9rem 1.3rem;margin-top:1.6rem;
+    border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:1.5rem 1.6rem}
+  .stat .from{font-family:var(--mono);font-size:.95rem;color:var(--faint);
+    text-decoration:line-through;text-decoration-thickness:1px}
   .stat .arrow{color:var(--faint)}
-  .stat .big{font-family:var(--serif);font-weight:600;font-size:2.7rem;letter-spacing:-.02em;color:var(--accent);line-height:1}
-  .stat .big span{font-family:var(--sans);font-size:1rem;color:var(--soft);font-weight:400;margin-left:.15rem}
-  .stat .cap{flex-basis:100%;font-size:.9rem;color:var(--soft);margin:.55rem 0 0}
+  .stat .glyph{width:30px;height:16px;border-radius:8px;background:var(--wax);position:relative;flex:none}
+  .stat .glyph::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1.5px;background:var(--panel)}
+  .stat .big{font-weight:600;font-size:2.6rem;letter-spacing:-.03em;line-height:1}
+  .stat .big span{font-size:1rem;color:var(--soft);font-weight:400;letter-spacing:0;margin-left:.2rem}
+  .stat .cap{flex-basis:100%;font-size:.92rem;color:var(--soft);margin:.4rem 0 0}
   .stat .cap b{color:var(--ink)}
 
-  /* two-up */
-  .two{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:1.5rem}
-  @media (max-width:640px){.two{grid-template-columns:1fr}}
-  .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.2rem}
-  .box h3{font-size:1rem;margin:0;font-weight:600;display:flex;align-items:baseline;gap:.5rem}
-  .box h3 .tag{font-family:var(--mono);font-size:.66rem;font-weight:500;color:var(--accent);
-    background:var(--accent-soft);border-radius:5px;padding:.12rem .42rem;letter-spacing:.03em}
-  .box p{margin:.55rem 0 0;font-size:.91rem;color:var(--soft)}
-
-  /* under the hood */
-  .deeper h2{font-family:var(--serif);font-size:1.35rem;color:var(--ink)}
-  .deeper p{color:var(--soft);font-size:.98rem}
-
-  footer{border-top:1px solid var(--line);padding:2.2rem 0 5rem;color:var(--faint);font-size:.88rem;
-    display:flex;gap:1.3rem;flex-wrap:wrap;align-items:center}
-  footer a{color:var(--soft)}
-  footer code{font-family:var(--mono);color:var(--soft)}
+  footer{border-top:1px solid var(--line);padding:2.4rem 0 5.5rem}
+  footer .wrap{display:flex;gap:1.4rem;flex-wrap:wrap;align-items:center;
+    font-family:var(--mono);font-size:.78rem;color:var(--soft)}
+  footer a{text-decoration:none;color:var(--soft)}
+  footer a:hover{color:var(--wax)}
   footer .sp{flex:1}
-  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+  @media (prefers-reduced-motion:reduce){
+    .hl,.lede,.facts,.rail{animation:none;opacity:1}
+    .traveler{animation:none;left:50%;opacity:1}
+    .half.hl-cap,.half.hr-cap,.dot{animation:none}
+    .pulse{display:none}
+  }
 </style>
 </head>
 <body>
 
-<div class="banner" role="note">🧪 <b>Research toy</b> — ve-capsule is experimental and unaudited. Don't use it to protect real keys yet.</div>
+<div class="banner" role="note"><b>research toy</b> — experimental &amp; unaudited. don't protect real keys with it yet.</div>
 
 <nav><div class="wrap">
-  <svg class="mk" viewBox="0 0 72 72" fill="none" aria-hidden="true">
-    <rect x="9" y="9" width="54" height="54" rx="13" stroke="currentColor" stroke-width="6"/>
-    <rect x="20" y="24" width="32" height="7" rx="3.5" fill="currentColor"/>
-    <rect x="20" y="35" width="32" height="7" rx="3.5" fill="currentColor"/>
-    <rect x="20" y="46" width="32" height="7" rx="3.5" fill="currentColor"/>
-  </svg>
+  <span class="pill-mk" aria-hidden="true"></span>
   <span class="name">ve-capsule</span>
   <span class="links">
-    <a href="#verify">Verify</a><a href="#life">Lifecycle</a><a href="#compact">Compact</a>
-    <a href="#trust">Recovery</a><a href="#curve">secp256k1</a>
-    <a href="https://www.jud.me/">jud.me</a>
+    <a href="#roles" class="opt">the split</a>
+    <a href="#gates" class="opt">gates</a>
+    <a href="#compact" class="opt">789 bytes</a>
+    <a href="#hood" class="opt">under the hood</a>
+    <a href="https://github.com/Jud/ve-capsule">github</a>
   </span>
 </div></nav>
 
 <header><div class="wrap">
-  <div class="eyebrow">secp256k1 · verifiable encryption</div>
-  <h1>Encryption you can<br><span class="i">audit</span> without opening.</h1>
-  <p class="lede">ve-capsule seals a secp256k1 key to a recipient and hands anyone a short proof that it
-    holds the <b>right</b> key — checkable any time, revealing nothing. Gate recovery behind a quorum's
-    consent, and compact a whole distributed-key backup down to a <b>tag-sized</b> artifact.</p>
-  <div class="pills">
-    <span class="pill">secp256k1-only</span>
-    <span class="pill">EC-ElGamal · segmented</span>
-    <span class="pill">publicly verifiable</span>
-    <span class="pill">789-byte recovery</span>
-    <span class="pill">no unsafe</span>
+  <div class="eyebrow">ve-capsule · verifiable encryption on secp256k1</div>
+  <h1>
+    <span class="hl">Sealed by one.</span>
+    <span class="hl">Proved by anyone.</span>
+    <span class="hl">Opened by another.</span>
+  </h1>
+  <p class="lede">ve-capsule seals a secp256k1 key into opaque bytes that can <b>prove what they hold</b>.
+    Sealing, proving, and opening are three separate powers — so the one who locks a secret away, whoever
+    stores and audits it, and the one who finally gets it back never have to trust each other.</p>
+  <div class="facts">secp256k1 · segmented EC-ElGamal · Bulletproofs++ · 789-byte recovery · no unsafe</div>
+
+  <div class="rail" aria-label="A capsule travels from the sealer, past the verifier who checks it without opening it, to the unsealer who opens it.">
+    <div class="track" aria-hidden="true">
+      <span class="tick t1"></span><span class="tick t2"></span><span class="tick t3"></span>
+      <span class="pulse"></span>
+      <div class="traveler">
+        <span class="half hl-cap"></span><span class="half hr-cap"></span><span class="dot"></span>
+      </div>
+    </div>
+    <div class="stations">
+      <div class="st">
+        <div class="k-label">01 · the sealer</div>
+        <p>Has the secret. Locks it to a key that isn't theirs, hands the bytes off, walks away.</p>
+      </div>
+      <div class="st mid">
+        <div class="k-label">02 · the verifier</div>
+        <p>Holds the capsule. Proves the right key is inside — today, next year — and can never open it.</p>
+      </div>
+      <div class="st end">
+        <div class="k-label">03 · the unsealer</div>
+        <p>Holds the key. Wasn't there for any of it. Opens the capsule when it finally arrives.</p>
+      </div>
+    </div>
   </div>
 </div></header>
 
-<section>
-  <div class="wrap">
-    <div class="step">Seal</div>
-    <h2>Lock a key to a recipient</h2>
-    <p>Seal a private key — or any secp256k1 scalar — to a recipient. What comes back is a
-      <em>capsule</em>: opaque bytes that give nothing away. Store it, copy it, hand it around. It stays
-      shut until the recipient opens it.</p>
+<section id="roles"><div class="wrap"><div class="sec">
+  <div class="k-label">The split</div>
+  <div>
+    <h2>Three jobs that were never the same job.</h2>
+    <p>A plain ciphertext welds them together: whoever stores it learns nothing and can vouch for
+      nothing, so you end up trusting the custodian's word until the day you open it. A capsule takes
+      the three roles apart and gives each one exactly what it needs.</p>
+
+    <h3><span class="n">01</span>The sealer</h3>
+    <p class="muted">Needs the secret and the unsealer's public key — no ceremony, no counterparty
+      online. Seal, hand the bytes to whoever keeps them, done. The capsule never needs its maker again.</p>
 <pre><span class="k">let</span> capsule = <span class="t">Capsule</span>::builder(&amp;secret, &amp;recipient, &amp;ctx).seal()?;
-<span class="k">let</span> bytes   = capsule.to_canonical_bytes();   <span class="c">// just bytes — keep them anywhere</span></pre>
-    <p class="muted">The recipient is a public key; sealing needs only that, opening needs the private
-      key behind it. <code>ctx</code> binds the capsule to your application, so it can't be lifted and
-      replayed somewhere else.</p>
-  </div>
-</section>
+<span class="k">let</span> bytes   = capsule.to_canonical_bytes();   <span class="c">// opaque — store them anywhere</span></pre>
 
-<section id="verify">
-  <div class="wrap">
-    <div class="step">Verify</div>
-    <h2>Prove the contents, reveal nothing</h2>
-    <p>A plain ciphertext is a promise you can't check until you open it. A capsule carries a short,
-      non-interactive proof that <em>anyone</em> can verify, against public data alone — so a backup can
-      be audited the moment it's made, not discovered to be empty or wrong years later when you finally
-      reach for it.</p>
-<pre><span class="c">// anyone holding the capsule and the public key can run this — no secret needed</span>
+    <h3><span class="n">02</span>The verifier</h3>
+    <p class="muted">Needs the capsule and public keys, nothing else: a short non-interactive proof
+      shows it holds exactly the private key for <code>public_key</code>. Check it at deposit; check it
+      every night for years. Nothing the verifier holds can open it.</p>
+<pre><span class="c">// no secret anywhere in this call</span>
 capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
-<span class="c">// proven: this capsule holds the private key for `public_key`. Nothing opened.</span></pre>
-  </div>
-</section>
+<span class="c">// proven: the right key is inside. Still sealed.</span></pre>
 
-<section id="life">
-  <div class="wrap">
-    <div class="step">Lifecycle</div>
-    <h2>Four verbs, two phases</h2>
-    <p>Encryption is one call. Decryption is consent-gated: <code>verify</code> hands back a capability
-      token, and only that token can act — you never operate on a capsule you haven't confirmed.</p>
-    <div class="flow">
-      <div class="c"><div class="n">01</div><div class="v">seal</div><div class="d">Lock a scalar to recipient + gates → an opaque, immutable capsule.</div></div>
-      <div class="c"><div class="n">02</div><div class="v">verify</div><div class="d">Confirm it against your authorization → a <code>VerifiedCapsule</code> token.</div></div>
-      <div class="c"><div class="n">03</div><div class="v">contribute</div><div class="d">Each authorizer emits a gate-tagged <code>Partial</code> — portable across devices.</div></div>
-      <div class="c"><div class="n">04</div><div class="v">unseal</div><div class="d">The recipient gathers partials, buckets per gate, recovers the secret.</div></div>
-    </div>
-  </div>
-</section>
+    <h3><span class="n">03</span>The unsealer</h3>
+    <p class="muted">Needs the recipient key — and wasn't there for any of it, not the sealing, not the
+      audits. When the capsule arrives, from the custodian or off a tag, verify once more and open.</p>
+<pre><span class="k">let</span> verified = <span class="t">Capsule</span>::from_canonical_bytes(&amp;bytes)?
+    .verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
+<span class="k">let</span> secret   = verified.unseal(&amp;recipient_key, &amp;[])?;</pre>
 
-<section id="compact">
-  <div class="wrap">
-    <div class="step">Compact recovery</div>
-    <h2>A whole backup, tag-sized</h2>
-    <p>The proof is for the auditor — recovery never re-runs it. Once a capsule is verified you can
-      <em>strip</em> the proof and keep the small opening core. For a distributed key you can go further:
-      because the pieces share one recovery key and EC-ElGamal is additively homomorphic, an entire
-      split — <em>any</em> number of helpers — collapses into one synthetic capsule, the homomorphic
-      <code>aggregate</code>.</p>
+    <p class="muted"><code>ctx</code> binds every one of these calls to your application, so a capsule
+      can't be lifted out of it and replayed somewhere else.</p>
+  </div>
+</div></div></section>
+
+<section id="escrow"><div class="wrap"><div class="sec">
+  <div class="k-label">Why it matters</div>
+  <div>
+    <h2>Escrow, minus the trusted part.</h2>
+    <p>Anywhere a secret has to wait with someone who must prove they have it but must never read it,
+      the roles come apart cleanly:</p>
+    <ul class="uses">
+      <li><span class="u">Custodial backup</span>
+        <p class="d">A service stores your key backup and proves, on demand, that it still holds the
+        right key. It can't use what it can't open.</p></li>
+      <li><span class="u">Inheritance</span>
+        <p class="d">A capsule sits sealed for years. The executor can show everyone it's the real
+        key; only the heir's device opens it.</p></li>
+      <li><span class="u">Counterparty escrow</span>
+        <p class="d">Prove the key is really on deposit before anyone performs — without releasing it,
+        and without the escrow agent ever being able to take it.</p></li>
+    </ul>
+  </div>
+</div></div></section>
+
+<section id="gates"><div class="wrap"><div class="sec">
+  <div class="k-label">Consent</div>
+  <div>
+    <h2>When opening should need permission.</h2>
+    <p>Seal with <em>gates</em> — extra public keys whose holders must each contribute before the
+      capsule opens. The unsealer's key alone is no longer enough: recovery becomes a quorum decision,
+      and a gate can itself be a threshold key no single member holds.</p>
+<pre><span class="k">let</span> capsule = <span class="t">Capsule</span>::builder(&amp;secret, &amp;recipient, &amp;ctx)
+    .access_keys(&amp;quorum)
+    .seal()?;   <span class="c">// now unsealing requires their contributions too</span></pre>
+    <p class="muted">For storage at NFC scale a capsule can drop its proof, and a quorum signature over
+      its canonical statement takes the proof's place — BIP-340 Schnorr, FROST(secp256k1)-TR among
+      them — so an authorizer can't be duped into helping open an attacker's fabricated ciphertext.</p>
+  </div>
+</div></div></section>
+
+<section id="compact"><div class="wrap"><div class="sec">
+  <div class="k-label">Compact</div>
+  <div>
+    <h2>A whole backup, tag-sized.</h2>
+    <p>When a distributed key generation hands a key out as shares that sum to the whole, seal each
+      share and bundle the capsules into a <em>Case</em>. Verifying it is one equation —
+      <code>Σ Mⱼ == M</code> — every share present, and together they reconstitute the certified key.
+      And because EC-ElGamal is additively homomorphic, a verified Case collapses: any number of
+      helpers aggregate into one synthetic capsule.</p>
     <div class="stat">
       <span class="from">≈149 KB × helpers</span>
       <span class="arrow">→</span>
+      <span class="glyph" aria-hidden="true"></span>
       <span class="big">789 <span>bytes</span></span>
-      <span class="cap">The entire aggregate, serialized — and <b>constant</b>: the same size whether two
-        helpers sealed the split or two hundred. Small enough for an NFC tag, a QR code, or a slip of paper.</span>
+      <span class="cap"><b>Constant</b> — the same 789 bytes whether two helpers sealed the split or
+        two hundred. An NFC tag, a QR code, a slip of paper.</span>
     </div>
 <pre><span class="c">// verify the bundle once (every piece present, Σ Mⱼ == M), then compact it</span>
 <span class="k">let</span> aggregate = verified.aggregate()?;            <span class="c">// H pieces → one synthetic capsule</span>
-<span class="k">let</span> bytes     = aggregate.to_canonical_bytes();   <span class="c">// 789 B, independent of H</span>
-
-<span class="c">// …later, from the tag…</span>
-<span class="k">let</span> recovered = <span class="t">AggregateCase</span>::from_canonical_bytes(&amp;bytes)?
-    .bind(&amp;whole_key, &amp;recipient, &amp;[], &amp;ctx)?       <span class="c">// re-pin to the certified target</span>
-    .unseal(&amp;recipient_key, &amp;[])?;                  <span class="c">// back to s = Σ sⱼ</span></pre>
+<span class="k">let</span> bytes     = aggregate.to_canonical_bytes();   <span class="c">// 789 B, independent of H</span></pre>
   </div>
-</section>
+</div></div></section>
 
-<section id="trust">
-  <div class="wrap">
-    <div class="step">Two trust models</div>
-    <h2>Recover alone, or only by quorum</h2>
-    <p>A compact core has dropped its proof — so something has to vouch for it. Two ways, and you pick
-      the one your threat model wants.</p>
-    <div class="two">
-      <div class="box">
-        <h3>Recipient-only <span class="tag">self-securing</span></h3>
-        <p>Nothing extra to keep. Recovery re-anchors on the certified target: the reconstructed scalar's
-          commitment must equal <code>M</code>, so a tampered or substituted core fails closed. The
-          recipient opens it with their key alone — the air-gapped backup.</p>
-      </div>
-      <div class="box">
-        <h3>Signature-backed <span class="tag">open set</span></h3>
-        <p>A signature takes the place of the proof: a quorum signs the capsule's canonical statement,
-          promoting the core to a contributable token — "require another group to authorize release." The
-          crate verifies BIP-340 Schnorr today (FROST(secp256k1)-TR among them); the backing is an open
-          set, with room for other schemes.</p>
-      </div>
-    </div>
-    <p class="muted">Why a signature, and not just any bytes? A stripped core carries no proof — so on its
-      own an authorizer can't tell a genuine capsule from one an attacker fabricated to harvest a partial
-      decryption. The signature vouches that the core is real before anyone contributes, so an authorizer
-      can't be duped into opening an attacker's chosen ciphertext.</p>
+<section id="curve"><div class="wrap"><div class="sec">
+  <div class="k-label">One curve</div>
+  <div>
+    <h2>Native to secp256k1, end to end.</h2>
+    <p>The recipient, the gates, the recovered secret, and the quorum signature all live on secp256k1 —
+      no class group, pairing curve, or RSA modulus standing beside your stack. It reuses the key types
+      and signers Bitcoin, FROST, and Taproot already speak, and a gated recovery is authorized by the
+      same kind of quorum signature your threshold signer already produces.</p>
   </div>
-</section>
+</div></div></section>
 
-<section>
-  <div class="wrap">
-    <div class="step">Compose</div>
-    <h2>Split a key into a Case</h2>
-    <p>When a distributed key generation produces a key as shares that add up to the whole, seal each
-      share and bundle the capsules into a <em>Case</em>. The recipient's secret is <code>s = Σ sⱼ</code>
-      with commitment <code>M = s·G</code> — a certified output of the DKG — so verifying the Case checks
-      <code>Σ Mⱼ == M</code>: completeness <em>and</em> correctness, in a single equation. No roster, no
-      signature. An authorizer can itself be a multi-party key no single member holds.</p>
-<pre><span class="k">let</span> case     = <span class="t">Case</span>::new(capsules)?;
-<span class="k">let</span> verified = case.verify(&amp;whole_key, &amp;recipient, &amp;[], &amp;ctx)?;
-<span class="c">// every share present, and together they reconstitute the whole key</span></pre>
+<section id="hood"><div class="wrap"><div class="sec">
+  <div class="k-label">Under the hood</div>
+  <div>
+    <h2>Segmented EC-ElGamal, one transcript.</h2>
+    <p class="muted">The sealed scalar is encrypted in small segments, and a single aggregated
+      <strong>Bulletproofs++</strong> range proof covers every segment and carry in the statement at
+      once, alongside a linking sigma and a batched DLEQ, all on one Fiat–Shamir transcript. That's
+      what keeps a capsule at a few kilobytes and verification at a handful of multiscalar equations:
+      the proof is logarithmic in the statement; the proven ranges are exact, so a capsule that
+      verifies is a capsule that decrypts; and there's no trusted setup — every generator is a
+      nothing-up-my-sleeve point each party re-derives locally (the
+      <a href="https://eprint.iacr.org/2022/510">EUROCRYPT 2024 construction</a>, implemented with the
+      corrections from <a href="https://github.com/cypherstack/bppp-review">Cypher Stack's independent
+      review</a>). Every capsule binds to exactly its participants and its context, checkable by anyone
+      without the secret. The surface is blob-in / blob-out: <code>#![forbid(unsafe_code)]</code>,
+      secrets zeroize on drop, and the proof algebra stays crate-private so a caller can't reach past
+      the consent-gated API. Sealing and unsealing aren't constant-time — run them where the secret
+      already lives.</p>
+    <p class="muted">The full construction and its security argument are in
+      <a href="https://github.com/Jud/ve-capsule/blob/main/docs/ec-segve-soundness.md">the specification →</a></p>
   </div>
-</section>
+</div></div></section>
 
-<section id="curve">
-  <div class="wrap">
-    <div class="step">Why secp256k1</div>
-    <h2>One curve, end to end</h2>
-    <p>The recipient, the gates, the recovered secret, and the optional quorum signature all live on
-      secp256k1. Many verifiable-encryption constructions live elsewhere — a class group, a
-      pairing-friendly curve, an RSA modulus — and ask your key material to take a detour through that
-      world. ve-capsule stays native.</p>
-    <p>That alignment is the point: it slots into a stack that already speaks secp256k1 — Bitcoin, FROST,
-      Taproot — reusing the same key types and signers, with no second curve, class group, or RSA modulus
-      to stand up beside it. A gated recovery is authorized by an ordinary secp256k1 quorum signature, the
-      same kind your threshold signer already produces.</p>
-  </div>
-</section>
-
-<div class="wrap"><div class="deeper" id="hood">
-  <h2>Under the hood</h2>
-  <p>ve-capsule is segmented EC-ElGamal verifiable encryption on secp256k1: the sealed scalar is
-    encrypted in small segments, and a single aggregated <strong>Bulletproofs++</strong> range proof
-    covers every segment and carry in the statement at once, alongside a linking sigma and a batched
-    DLEQ, all on one Fiat–Shamir transcript. Bulletproofs++ is what keeps a whole capsule at a few
-    kilobytes and verification at a handful of multiscalar equations: the proof is logarithmic in the
-    statement and aggregated across it; the proven ranges are exact, so a capsule that verifies is a
-    capsule that decrypts; and there's no trusted setup — every generator is a nothing-up-my-sleeve
-    point each party re-derives locally (the <a href="https://eprint.iacr.org/2022/510">EUROCRYPT 2024
-    construction</a>, implemented with the corrections from
-    <a href="https://github.com/cypherstack/bppp-review">Cypher Stack's independent review</a>). Every capsule binds to exactly its
-    participants and its context, checkable by anyone without the secret. The surface is blob-in /
-    blob-out: <code>#![forbid(unsafe_code)]</code>, secrets zeroize on drop, and the proof algebra stays
-    crate-private so a caller can't reach past the consent-gated API. Sealing and unsealing aren't
-    constant-time — run them where the secret already lives.</p>
-  <p>The full construction and its security argument are in
-    <a href="https://github.com/Jud/ve-capsule/blob/main/docs/ec-segve-soundness.md">the specification →</a></p>
-</div></div>
-
-<footer><div class="wrap" style="display:flex;gap:1.3rem;flex-wrap:wrap;align-items:center">
+<footer><div class="wrap">
   <a href="https://github.com/Jud/ve-capsule">github.com/Jud/ve-capsule</a>
   <span class="sp"></span>
   <code>cargo add ve-capsule --git https://github.com/Jud/ve-capsule</code>
   <span>MIT / Apache-2.0</span>
+  <a href="https://www.jud.me/">jud.me</a>
 </div></footer>
 
 </body>
