@@ -64,7 +64,7 @@
     line-height:1.04;letter-spacing:-.01em;margin:0;font-feature-settings:"liga","dlig";
     display:grid;grid-template-columns:max-content max-content;column-gap:.27em;justify-content:start}
   h1 .hl{display:block;white-space:nowrap}
-  h1 .hl:nth-child(odd){text-align:right}
+  h1 .jv{display:flex;justify-content:space-between}
   h1 em{font-weight:400;letter-spacing:0}
   .lede{font-size:1.18rem;line-height:1.55;color:var(--soft);max-width:38rem;margin:2.2rem 0 0}
   .lede b{color:var(--ink);font-weight:600}
@@ -193,10 +193,10 @@
 
 <header><div class="wrap">
   <div class="eyebrow">ve-capsule · verifiable encryption on secp256k1</div>
-  <h1>
-    <span class="hl">Sealed</span><span class="hl">by <em>one</em>.</span>
+  <h1 aria-label="Sealed by one. Verified by anyone. Opened by the one.">
+    <span class="hl jv"><span>S</span><span>e</span><span>a</span><span>l</span><span>e</span><span>d</span></span><span class="hl">by <em>one</em>.</span>
     <span class="hl">Verified</span><span class="hl">by <em>anyone</em>.</span>
-    <span class="hl">Opened</span><span class="hl">by <em>the one</em>.</span>
+    <span class="hl jv"><span>O</span><span>p</span><span>e</span><span>n</span><span>e</span><span>d</span></span><span class="hl">by <em>the one</em>.</span>
   </h1>
   <p class="lede">ve-capsule seals a secp256k1 key into opaque bytes that can <b>prove what they hold</b>.
     Sealing, verifying, and opening are three separate powers — so the one who locks a secret away, whoever
