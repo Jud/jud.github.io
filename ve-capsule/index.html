@@ -185,7 +185,7 @@
   <span class="links">
     <a href="#roles" class="opt">the split</a>
     <a href="#gates" class="opt">gates</a>
-    <a href="#compact" class="opt">789 bytes</a>
+    <a href="#compact" class="opt">the sticker</a>
     <a href="#hood" class="opt">under the hood</a>
     <a href="https://github.com/Jud/ve-capsule">github</a>
   </span>
@@ -201,7 +201,7 @@
   <p class="lede">ve-capsule seals a secp256k1 key into opaque bytes that can <b>prove what they hold</b>.
     Sealing, verifying, and opening are three separate powers — so the one who locks a secret away, whoever
     stores and audits it, and the one who finally gets it back never have to trust each other.</p>
-  <div class="facts">secp256k1 · segmented EC-ElGamal · Bulletproofs++ · 789-byte recovery · no unsafe</div>
+  <div class="facts">secp256k1 · segmented EC-ElGamal · Bulletproofs++ · card-only recovery · no unsafe</div>
 
   <div class="rail" aria-label="A capsule travels from the sealer, past the verifier who checks it without opening it, to the unsealer who opens it.">
     <div class="track" aria-hidden="true">
@@ -305,19 +305,19 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
     <p>When a distributed key generation hands a key out as shares that sum to the whole, seal each
       share and bundle the capsules into a <em>Case</em>. Verifying it is one equation —
       <code>Σ Mⱼ == M</code> — every share present, and together they reconstitute the certified key.
-      And because EC-ElGamal is additively homomorphic, a verified Case collapses: any number of
-      helpers aggregate into one synthetic capsule.</p>
+      For recovery you don't carry the proofs: alongside each capsule a dealer seals a 65-byte
+      recovery hint, and the hints assemble into one card-only sticker.</p>
     <div class="stat">
-      <span class="from">≈149 KB × helpers</span>
+      <span class="from">≈5.4 KB / helper</span>
       <span class="arrow">→</span>
       <span class="glyph" aria-hidden="true"></span>
-      <span class="big">789 <span>bytes</span></span>
-      <span class="cap"><b>Constant</b> — the same 789 bytes whether two helpers sealed the split or
-        two hundred. An NFC tag, a QR code, a slip of paper.</span>
+      <span class="big">65 <span>bytes a piece</span></span>
+      <span class="cap"><b>Tag-sized</b> — tens of bytes a helper, a few hundred for a quorum. An NFC
+        tag, a QR code, a slip of paper. A card opens each piece with one ECDH.</span>
     </div>
-<pre><span class="c">// verify the bundle once (every piece present, Σ Mⱼ == M), then compact it</span>
-<span class="k">let</span> aggregate = verified.aggregate()?;            <span class="c">// H pieces → one synthetic capsule</span>
-<span class="k">let</span> bytes     = aggregate.to_canonical_bytes();   <span class="c">// 789 B, independent of H</span></pre>
+<pre><span class="c">// each dealer seals a 65-byte hint beside its capsule; gather a card-only sticker</span>
+<span class="k">let</span> hint    = seal_recovery_hint(&piece, &recipient, &rctx, idx, &mut rng)?;
+<span class="k">let</span> sticker = assemble_card_only_sticker(&vs, &hints)?;   <span class="c">// tag-sized, no proof</span></pre>
   </div>
 </div></div></section>
 
