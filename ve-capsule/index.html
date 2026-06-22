@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ve-capsule — sealed by one, verified by anyone, opened by the one</title>
-<meta name="description" content="ve-capsule seals a secp256k1 key into opaque bytes that prove what they hold. The sealer, the verifier, and the unsealer are three different parties — escrow without the trusted middleman.">
+<title>ve-capsule — seal a scalar, verify the target, recover by consent</title>
+<meta name="description" content="ve-capsule seals a secp256k1 scalar into opaque bytes that prove their target, open only to the recipient, and can be compacted into recovery payloads.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -185,7 +185,7 @@
   <span class="links">
     <a href="#roles" class="opt">the split</a>
     <a href="#gates" class="opt">gates</a>
-    <a href="#compact" class="opt">the sticker</a>
+    <a href="#compact" class="opt">payloads</a>
     <a href="#hood" class="opt">under the hood</a>
     <a href="https://github.com/Jud/ve-capsule">github</a>
   </span>
@@ -198,10 +198,10 @@
     <span class="hl">Verified</span><span class="hl">by <em>anyone</em>.</span>
     <span class="hl">Opened</span><span class="hl">by <em>the one</em>.</span>
   </h1>
-  <p class="lede">ve-capsule seals a secp256k1 key into opaque bytes that can <b>prove what they hold</b>.
+  <p class="lede">ve-capsule seals a secp256k1 scalar into opaque bytes that can <b>prove what they hold</b>.
     Sealing, verifying, and opening are three separate powers — so the one who locks a secret away, whoever
     stores and audits it, and the one who finally gets it back never have to trust each other.</p>
-  <div class="facts">secp256k1 · segmented EC-ElGamal · Bulletproofs++ · card-only recovery · no unsafe</div>
+  <div class="facts">secp256k1 · segmented EC-ElGamal · Bulletproofs++ · compact recovery payloads · no unsafe</div>
 
   <div class="rail" aria-label="A capsule travels from the sealer, past the verifier who checks it without opening it, to the unsealer who opens it.">
     <div class="track" aria-hidden="true">
@@ -233,7 +233,7 @@
   <div>
     <h2>Three jobs that were never the same job.</h2>
     <p>A plain ciphertext welds them together: whoever stores it learns nothing and can vouch for
-      nothing, so you end up trusting the custodian's word until the day you open it. A capsule takes
+      nothing, so you end up trusting storage metadata until the day you open it. A capsule takes
       the three roles apart and gives each one exactly what it needs.</p>
 
     <h3><span class="n">01</span>The sealer</h3>
@@ -252,32 +252,33 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 
     <h3><span class="n">03</span>The unsealer</h3>
     <p class="muted">Needs the recipient key — and wasn't there for any of it, not the sealing, not the
-      audits. When the capsule arrives, from the custodian or off a tag, verify once more and open.</p>
+      audits. When the capsule arrives, verify once more and open.</p>
 <pre><span class="k">let</span> verified = <span class="t">Capsule</span>::from_canonical_bytes(&amp;bytes)?
     .verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
-<span class="k">let</span> secret   = verified.unseal(&amp;recipient_key, &amp;[])?;</pre>
+<span class="k">let</span> secret   = verified.unseal(&amp;recipient_secret, &amp;[])?;</pre>
 
     <p class="muted"><code>ctx</code> binds every one of these calls to your application, so a capsule
       can't be lifted out of it and replayed somewhere else.</p>
   </div>
 </div></div></section>
 
-<section id="escrow"><div class="wrap"><div class="sec">
-  <div class="k-label">Why it matters</div>
+<section id="capabilities"><div class="wrap"><div class="sec">
+  <div class="k-label">What it does</div>
   <div>
-    <h2>Escrow, minus the trusted part.</h2>
-    <p>Anywhere a secret has to wait with someone who must prove they have it but must never read it,
-      the roles come apart cleanly:</p>
+    <h2>Blob in, proof out, secret still shut.</h2>
+    <p>The crate surface is deliberately narrow: callers hand it scalar material,
+      public keys, and context bytes, and get back canonical artifacts they can
+      store, verify, strip, sign, or recover.</p>
     <ul class="uses">
-      <li><span class="u">Custodial backup</span>
-        <p class="d">A service stores your key backup and proves, on demand, that it still holds the
-        right key. It can't use what it can't open.</p></li>
-      <li><span class="u">Inheritance</span>
-        <p class="d">A capsule sits sealed for years. The executor can show everyone it's the real
-        key; only the heir's device opens it.</p></li>
-      <li><span class="u">Counterparty escrow</span>
-        <p class="d">Prove the key is really on deposit before anyone performs — without releasing it,
-        and without the escrow agent ever being able to take it.</p></li>
+      <li><span class="u">Seal</span>
+        <p class="d">Encrypt one scalar to a recipient public key, with optional access gates and
+        application context bound into the statement.</p></li>
+      <li><span class="u">Verify</span>
+        <p class="d">Check the capsule proves the expected public target without learning the scalar
+        or needing the recipient secret.</p></li>
+      <li><span class="u">Recover</span>
+        <p class="d">Open with the recipient secret, plus any required gate contributions, and reject
+        if the recovered scalar does not match the certified target.</p></li>
     </ul>
   </div>
 </div></div></section>
@@ -288,36 +289,46 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
     <h2>When opening should need permission.</h2>
     <p>Seal with <em>gates</em> — extra public keys whose holders must each contribute before the
       capsule opens. The unsealer's key alone is no longer enough: recovery becomes a quorum decision,
-      and a gate can itself be a threshold key no single member holds.</p>
+      and a gate can itself be a threshold key no single participant holds.</p>
 <pre><span class="k">let</span> capsule = <span class="t">Capsule</span>::builder(&amp;secret, &amp;recipient, &amp;ctx)
     .access_keys(&amp;quorum)
     .seal()?;   <span class="c">// now unsealing requires their contributions too</span></pre>
-    <p class="muted">For storage at NFC scale a capsule can drop its proof, and a quorum signature over
-      its canonical statement takes the proof's place — BIP-340 Schnorr, FROST(secp256k1)-TR among
-      them — so an authorizer can't be duped into helping open an attacker's fabricated ciphertext.</p>
+    <p class="muted">A verified capsule can drop its proof into a compact core, and a quorum signature
+      over its canonical statement takes the proof's place — BIP-340 Schnorr,
+      FROST(secp256k1)-TR among them — so an authorizer can't be duped into helping
+      open an attacker's fabricated ciphertext.</p>
   </div>
 </div></div></section>
 
 <section id="compact"><div class="wrap"><div class="sec">
   <div class="k-label">Compact</div>
   <div>
-    <h2>A whole backup, tag-sized.</h2>
-    <p>When a distributed key generation hands a key out as shares that sum to the whole, seal each
-      share and bundle the capsules into a <em>Case</em>. Verifying it is one equation —
-      <code>Σ Mⱼ == M</code> — every share present, and together they reconstitute the certified key.
-      For recovery you don't carry the proofs: alongside each capsule a dealer seals a 65-byte
-      recovery hint, and the hints assemble into one card-only sticker.</p>
+    <h2>Additive pieces, compact recovery.</h2>
+    <p>When an application represents a scalar as additive pieces, seal each piece and bundle the
+      capsules into a <em>Case</em>. Verifying it is one equation —
+      <code>Σ Mⱼ == M</code> — every piece present, and together they reconstitute the certified target.
+      For recovery you don't have to carry the proofs: alongside each capsule a producer seals a
+      65-byte recovery hint, and the hints assemble into one compact recovery payload. If your scheme
+      needs interpolation weights or other coefficients, apply them before sealing; the payload carries
+      already-prepared contributions.</p>
     <div class="stat">
-      <span class="from">≈5.4 KB / helper</span>
+      <span class="from">≈5.4 KB / proof</span>
       <span class="arrow">→</span>
       <span class="glyph" aria-hidden="true"></span>
       <span class="big">65 <span>bytes a piece</span></span>
-      <span class="cap"><b>Tag-sized</b> — tens of bytes a helper, a few hundred for a quorum. An NFC
-        tag, a QR code, a slip of paper. A card opens each piece with one ECDH.</span>
+      <span class="cap"><b>Recipient-only</b> — one ECDH, one hash, and one subtraction per piece.
+        The recovered sum is checked against the certified target, not the payload's copy.</span>
     </div>
-<pre><span class="c">// each dealer seals a 65-byte hint beside its capsule; gather a card-only sticker</span>
-<span class="k">let</span> hint    = seal_recovery_hint(&piece, &recipient, &rctx, idx, &mut rng)?;
-<span class="k">let</span> sticker = assemble_card_only_sticker(&vs, &hints)?;   <span class="c">// tag-sized, no proof</span></pre>
+<pre><span class="k">let</span> rctx = <span class="t">RecoveryContext</span> {
+    certified_target: &amp;target_public,
+    ctx: &amp;context_bytes,
+    epoch,
+};
+
+<span class="c">// each producer seals a 65-byte hint beside its capsule; gather a compact payload</span>
+<span class="k">let</span> hint = seal_recovery_hint(&contribution, &recipient, &rctx, idx, &mut rng)?;
+<span class="k">let</span> payload_bytes =
+    assemble_recipient_recovery_payload(&target_public, &hints)?;   <span class="c">// no proof bytes</span></pre>
   </div>
 </div></div></section>
 
