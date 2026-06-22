@@ -278,7 +278,7 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
         or needing the recipient secret.</p></li>
       <li><span class="u">Recover</span>
         <p class="d">Open with the recipient secret, plus any required gate contributions, and reject
-        if the recovered scalar does not match the certified target.</p></li>
+        if the recovered scalar does not match the expected public key.</p></li>
     </ul>
   </div>
 </div></div></section>
@@ -306,7 +306,7 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
     <h2>Additive pieces, compact recovery.</h2>
     <p>When an application represents a scalar as additive pieces, seal each piece and bundle the
       capsules into a <em>Case</em>. Verifying it is one equation —
-      <code>Σ Mⱼ == M</code> — every piece present, and together they reconstitute the certified target.
+      <code>Σ Mⱼ == M</code> — every piece present, and together they reconstitute the expected public key.
       For recovery you don't have to carry the proofs: alongside each capsule a producer seals a
       65-byte recovery hint, and the hints assemble into one compact recovery payload. If your scheme
       needs interpolation weights or other coefficients, apply them before sealing; the payload carries
@@ -317,10 +317,10 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
       <span class="glyph" aria-hidden="true"></span>
       <span class="big">65 <span>bytes a piece</span></span>
       <span class="cap"><b>Recipient-only</b> — one ECDH, one hash, and one subtraction per piece.
-        The recovered sum is checked against the certified target, not the payload's copy.</span>
+        The recovered sum is checked against the expected public key, not the payload's copy.</span>
     </div>
 <pre><span class="k">let</span> rctx = <span class="t">RecoveryContext</span> {
-    certified_target: &amp;target_public,
+    certified_target: &amp;expected_public_key,
     ctx: &amp;context_bytes,
     epoch,
 };
@@ -328,7 +328,7 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <span class="c">// each producer seals a 65-byte hint beside its capsule; gather a compact payload</span>
 <span class="k">let</span> hint = seal_recovery_hint(&contribution, &recipient, &rctx, idx, &mut rng)?;
 <span class="k">let</span> payload_bytes =
-    assemble_recipient_recovery_payload(&target_public, &hints)?;   <span class="c">// no proof bytes</span></pre>
+    assemble_recipient_recovery_payload(&expected_public_key, &hints)?;   <span class="c">// no proof bytes</span></pre>
   </div>
 </div></div></section>
 
