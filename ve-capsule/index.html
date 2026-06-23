@@ -343,6 +343,22 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
   </div>
 </div></div></section>
 
+<section id="not-just-bulletproofs"><div class="wrap"><div class="sec">
+  <div class="k-label">Why not just BP++?</div>
+  <div>
+    <h2>Bulletproofs prove a fact. ve-capsule ships the sealed object.</h2>
+    <p>A Bulletproof can prove committed numbers are in range. That is useful, but it is not the
+      whole product. It does not say who can open the ciphertext, how the opened secret is checked
+      against the expected public key, how approvers contribute without leaking their keys, or how a
+      proof-heavy artifact turns into a compact recovery payload.</p>
+    <p class="muted">ve-capsule uses Bulletproofs++ inside the seal proof, then adds the missing
+      protocol: segmented EC-ElGamal encryption, context binding, recipient opening, consent gates,
+      quorum signatures for stripped cores, Cases for additive pieces, and recovery hints for compact
+      payloads. Bulletproofs are the receipt for one claim; ve-capsule is the sealed package and the
+      rules for opening it.</p>
+  </div>
+</div></div></section>
+
 <section id="hood"><div class="wrap"><div class="sec">
   <div class="k-label">Under the hood</div>
   <div>
