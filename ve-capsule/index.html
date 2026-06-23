@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ve-capsule — verifiable encrypted keys</title>
-<meta name="description" content="Prove a capsule really holds the private key for a given secp256k1 public key — without opening it. Anyone can verify; only the recipient, or required approvers, can recover.">
+<title>ve-capsule — self-verifying recovery shares</title>
+<meta name="description" content="Create self-verifying recovery artifacts for issued secp256k1 shares. Verify a sealed share before the recovery device ever opens it.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -183,7 +183,7 @@
   <span class="pill-mk" aria-hidden="true"></span>
   <span class="name">ve-capsule</span>
   <span class="links">
-    <a href="#roles" class="opt">the split</a>
+    <a href="#roles" class="opt">artifact</a>
     <a href="#gates" class="opt">gates</a>
     <a href="#compact" class="opt">payloads</a>
     <a href="#hood" class="opt">under the hood</a>
@@ -192,18 +192,17 @@
 </div></nav>
 
 <header><div class="wrap">
-  <div class="eyebrow">ve-capsule · verifiable encryption on secp256k1</div>
+  <div class="eyebrow">ve-capsule · self-verifying recovery artifacts</div>
   <h1>
-    <span class="hl">Encrypted</span><span class="hl">keys.</span>
-    <span class="hl">Public</span><span class="hl">checks.</span>
-    <span class="hl">Private</span><span class="hl">recovery.</span>
+    <span class="hl">Recovery</span><span class="hl">shares.</span>
+    <span class="hl">Verified</span><span class="hl">at setup.</span>
   </h1>
-  <p class="lede">ve-capsule seals a secp256k1 private key into a capsule. Anyone can prove the capsule
-    really holds the private key for a given public key — <b>without opening it</b>. Only the recipient,
-    plus any required approvers, can recover the secret.</p>
+  <p class="lede">ve-capsule creates self-verifying recovery artifacts for issued secp256k1 shares.
+    The active signers can seal a recovery share to an offline device, while anyone can verify it matches
+    the intended public share before that device ever opens it.</p>
   <div class="facts">secp256k1 · segmented EC-ElGamal · Bulletproofs++ · compact recovery payloads · no unsafe</div>
 
-  <div class="rail" aria-label="A capsule travels from the sealer, past the verifier who checks it without opening it, to the unsealer who opens it.">
+  <div class="rail" aria-label="A recovery artifact travels from the issuer, past the verifier who checks it without opening it, to the recovery device that opens it.">
     <div class="track" aria-hidden="true">
       <span class="tick t1"></span><span class="tick t2"></span><span class="tick t3"></span>
       <span class="pulse"></span>
@@ -213,47 +212,45 @@
     </div>
     <div class="stations">
       <div class="st">
-        <div class="k-label">01 · the sealer</div>
-        <p>Creates the capsule from the secret and recipient public key.</p>
+        <div class="k-label">01 · the issuer</div>
+        <p>Seals an issued share to the recovery device's public key.</p>
       </div>
       <div class="st mid">
         <div class="k-label">02 · the verifier</div>
-        <p>Proves it holds the right private key, without opening it.</p>
+        <p>Checks the artifact matches the intended public share.</p>
       </div>
       <div class="st end">
-        <div class="k-label">03 · the unsealer</div>
-        <p>Uses the recipient secret, and any gate contributions, to recover it.</p>
+        <div class="k-label">03 · the device</div>
+        <p>Uses its recovery secret, and any gate contributions, to open it later.</p>
       </div>
     </div>
   </div>
 </div></header>
 
 <section id="roles"><div class="wrap"><div class="sec">
-  <div class="k-label">The split</div>
+  <div class="k-label">Artifact</div>
   <div>
-    <h2>Prove the private key is really inside.</h2>
-    <p>Normal encryption returns opaque bytes — no one can tell which secret they hold without the key to
-      open them. ve-capsule seals a secp256k1 private key and adds a public proof: anyone can check the
-      capsule really holds the private key for a given public key, while only the recipient holds the
-      key to open it. An artifact can be audited the moment it's made — not discovered to be empty or
-      wrong only when it's finally opened.</p>
+    <h2>The bytes state what they are.</h2>
+    <p>Normal encryption gives you opaque bytes. A ve-capsule artifact carries a public proof that the
+      sealed scalar matches the public share it claims to protect. The recovery device can be offline
+      during setup; other participants can still audit the artifact before relying on it.</p>
 
-    <h3><span class="n">01</span>The sealer</h3>
-    <p class="muted">Needs the secret, the recipient public key, and context bytes. The result is
-      canonical bytes you can store anywhere.</p>
+    <h3><span class="n">01</span>The issuer</h3>
+    <p class="muted">Needs the issued share, the recovery device public key, and context bytes.
+      The result is canonical bytes you can store anywhere.</p>
 <pre><span class="k">let</span> capsule = <span class="t">Capsule</span>::builder(&amp;secret, &amp;recipient, &amp;ctx).seal()?;
 <span class="k">let</span> bytes   = capsule.to_canonical_bytes();   <span class="c">// opaque; store them anywhere</span></pre>
 
     <h3><span class="n">02</span>The verifier</h3>
-    <p class="muted">Needs the capsule and public keys. The proof shows the capsule holds the private key
-      for <code>public_key</code>. Nothing used for verification can open it.</p>
+    <p class="muted">Needs the capsule and public keys. The proof shows the sealed share corresponds
+      to <code>public_key</code>. Nothing used for verification can open it.</p>
 <pre><span class="c">// no secret anywhere in this call</span>
 capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
-<span class="c">// proven: it holds the private key for public_key. Still sealed.</span></pre>
+<span class="c">// proven: the sealed scalar matches public_key. Still sealed.</span></pre>
 
-    <h3><span class="n">03</span>The unsealer</h3>
+    <h3><span class="n">03</span>The recovery device</h3>
     <p class="muted">Needs the recipient secret. Verify the capsule first, then recover the sealed
-      scalar.</p>
+      share.</p>
 <pre><span class="k">let</span> verified = <span class="t">Capsule</span>::from_canonical_bytes(&amp;bytes)?
     .verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <span class="k">let</span> secret   = verified.unseal(&amp;recipient_secret, &amp;[])?;</pre>
@@ -266,15 +263,15 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <section id="capabilities"><div class="wrap"><div class="sec">
   <div class="k-label">What it does</div>
   <div>
-    <h2>Inputs and outputs.</h2>
+    <h2>A small surface.</h2>
     <p>Callers pass in scalar material, public keys, and context bytes. ve-capsule returns canonical
-      artifacts for storage, verification, signing, and recovery.</p>
+      artifacts for storage, verification, and recovery.</p>
     <ul class="uses">
       <li><span class="u">Seal</span>
-        <p class="d">Encrypt one scalar to a recipient public key. Optional gates add approval
+        <p class="d">Encrypt one issued share to a recovery public key. Optional gates add approval
         requirements.</p></li>
       <li><span class="u">Verify</span>
-        <p class="d">Prove the capsule holds the private key for the expected public key, without learning the scalar.</p></li>
+        <p class="d">Prove the capsule matches the expected public share, without learning the scalar.</p></li>
       <li><span class="u">Recover</span>
         <p class="d">Open with the recipient secret and any required approvals. Reject if the result
         does not match the expected public key.</p></li>
@@ -285,7 +282,7 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <section id="gates"><div class="wrap"><div class="sec">
   <div class="k-label">Consent</div>
   <div>
-    <h2>Add approvals when one key is not enough.</h2>
+    <h2>Add approvals when recovery should require consent.</h2>
     <p>A gate is an extra public key that must contribute before the capsule opens. The recipient key
       can open alone only when there are no gates. A gate can also be a threshold key.</p>
 <pre><span class="k">let</span> capsule = <span class="t">Capsule</span>::builder(&amp;secret, &amp;recipient, &amp;ctx)
@@ -300,7 +297,7 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <section id="compact"><div class="wrap"><div class="sec">
   <div class="k-label">Compact</div>
   <div>
-    <h2>Split the secret. Keep recovery small.</h2>
+    <h2>Keep the recovery payload small.</h2>
     <p>If a scalar is stored as additive pieces, seal each piece and bundle the capsules into a
       <em>Case</em>. One check, <code>Σ Mⱼ == M</code>, proves the pieces add up to the expected public
       key. For recovery, each producer also emits a 65-byte hint. The hints form a compact recovery
