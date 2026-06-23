@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ve-capsule — verifiable encrypted keys</title>
-<meta name="description" content="ve-capsule turns a secp256k1 secret into bytes anyone can verify and only the recipient, or required approvers, can recover.">
+<meta name="description" content="Prove a capsule really holds the private key for a given secp256k1 public key — without opening it. Anyone can verify; only the recipient, or required approvers, can recover.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -198,8 +198,9 @@
     <span class="hl">Public</span><span class="hl">checks.</span>
     <span class="hl">Private</span><span class="hl">recovery.</span>
   </h1>
-  <p class="lede">ve-capsule turns a secp256k1 secret into a capsule. Anyone can check it opens to the
-    expected public key. Only the recipient, plus any required approvers, can recover it.</p>
+  <p class="lede">ve-capsule seals a secp256k1 private key into a capsule. Anyone can prove the capsule
+    really holds the private key for a given public key — <b>without opening it</b>. Only the recipient,
+    plus any required approvers, can recover the secret.</p>
   <div class="facts">secp256k1 · segmented EC-ElGamal · Bulletproofs++ · compact recovery payloads · no unsafe</div>
 
   <div class="rail" aria-label="A capsule travels from the sealer, past the verifier who checks it without opening it, to the unsealer who opens it.">
@@ -217,7 +218,7 @@
       </div>
       <div class="st mid">
         <div class="k-label">02 · the verifier</div>
-        <p>Checks the capsule without learning the secret.</p>
+        <p>Proves it holds the right private key, without opening it.</p>
       </div>
       <div class="st end">
         <div class="k-label">03 · the unsealer</div>
@@ -230,9 +231,12 @@
 <section id="roles"><div class="wrap"><div class="sec">
   <div class="k-label">The split</div>
   <div>
-    <h2>Storage should not require trust.</h2>
-    <p>With normal encryption, a stored blob is opaque. The storage layer cannot prove it contains the
-      right secret. ve-capsule adds that proof without giving storage the key.</p>
+    <h2>Prove the private key is really inside.</h2>
+    <p>Normal encryption returns opaque bytes — no one can tell which secret they hold without the key to
+      open them. ve-capsule seals a secp256k1 private key and adds a public proof: anyone can check the
+      capsule really holds the private key for a given public key, while only the recipient holds the
+      key to open it. An artifact can be audited the moment it's made — not discovered to be empty or
+      wrong only when it's finally opened.</p>
 
     <h3><span class="n">01</span>The sealer</h3>
     <p class="muted">Needs the secret, the recipient public key, and context bytes. The result is
@@ -241,11 +245,11 @@
 <span class="k">let</span> bytes   = capsule.to_canonical_bytes();   <span class="c">// opaque; store them anywhere</span></pre>
 
     <h3><span class="n">02</span>The verifier</h3>
-    <p class="muted">Needs the capsule and public keys. The proof shows the capsule opens to
-      <code>public_key</code>. Nothing used for verification can open it.</p>
+    <p class="muted">Needs the capsule and public keys. The proof shows the capsule holds the private key
+      for <code>public_key</code>. Nothing used for verification can open it.</p>
 <pre><span class="c">// no secret anywhere in this call</span>
 capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
-<span class="c">// proven: the right key is inside. Still sealed.</span></pre>
+<span class="c">// proven: it holds the private key for public_key. Still sealed.</span></pre>
 
     <h3><span class="n">03</span>The unsealer</h3>
     <p class="muted">Needs the recipient secret. Verify the capsule first, then recover the sealed
@@ -270,7 +274,7 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
         <p class="d">Encrypt one scalar to a recipient public key. Optional gates add approval
         requirements.</p></li>
       <li><span class="u">Verify</span>
-        <p class="d">Check the capsule opens to the expected public key without learning the scalar.</p></li>
+        <p class="d">Prove the capsule holds the private key for the expected public key, without learning the scalar.</p></li>
       <li><span class="u">Recover</span>
         <p class="d">Open with the recipient secret and any required approvals. Reject if the result
         does not match the expected public key.</p></li>
