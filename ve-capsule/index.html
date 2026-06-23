@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ve-capsule — seal a scalar, verify the target, recover by consent</title>
-<meta name="description" content="ve-capsule seals a secp256k1 scalar into opaque bytes that prove their target, open only to the recipient, and can be compacted into recovery payloads.">
+<title>ve-capsule — verifiable encrypted keys</title>
+<meta name="description" content="ve-capsule turns a secp256k1 secret into bytes anyone can verify and only the recipient, or required approvers, can recover.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -177,7 +177,7 @@
 </head>
 <body>
 
-<div class="banner" role="note"><b>research toy</b> — experimental &amp; unaudited. don't protect real keys with it yet.</div>
+<div class="banner" role="note"><b>research toy</b>: experimental &amp; unaudited. don't protect real keys with it yet.</div>
 
 <nav><div class="wrap">
   <span class="pill-mk" aria-hidden="true"></span>
@@ -194,13 +194,12 @@
 <header><div class="wrap">
   <div class="eyebrow">ve-capsule · verifiable encryption on secp256k1</div>
   <h1>
-    <span class="hl">Sealed</span><span class="hl">by <em>one</em>.</span>
-    <span class="hl">Verified</span><span class="hl">by <em>anyone</em>.</span>
-    <span class="hl">Opened</span><span class="hl">by <em>the one</em>.</span>
+    <span class="hl">Encrypted</span><span class="hl">keys.</span>
+    <span class="hl">Public</span><span class="hl">checks.</span>
+    <span class="hl">Private</span><span class="hl">recovery.</span>
   </h1>
-  <p class="lede">ve-capsule seals a secp256k1 scalar into opaque bytes that can <b>prove what they hold</b>.
-    Sealing, verifying, and opening are three separate powers — so the one who locks a secret away, whoever
-    stores and audits it, and the one who finally gets it back never have to trust each other.</p>
+  <p class="lede">ve-capsule turns a secp256k1 secret into a capsule. Anyone can check it opens to the
+    expected public key. Only the recipient, plus any required approvers, can recover it.</p>
   <div class="facts">secp256k1 · segmented EC-ElGamal · Bulletproofs++ · compact recovery payloads · no unsafe</div>
 
   <div class="rail" aria-label="A capsule travels from the sealer, past the verifier who checks it without opening it, to the unsealer who opens it.">
@@ -214,15 +213,15 @@
     <div class="stations">
       <div class="st">
         <div class="k-label">01 · the sealer</div>
-        <p>Has the secret. Locks it to a key that isn't theirs, hands the bytes off, walks away.</p>
+        <p>Creates the capsule from the secret and recipient public key.</p>
       </div>
       <div class="st mid">
         <div class="k-label">02 · the verifier</div>
-        <p>Holds the capsule. Proves the right key is inside — today, next year — and can never open it.</p>
+        <p>Checks the capsule without learning the secret.</p>
       </div>
       <div class="st end">
         <div class="k-label">03 · the unsealer</div>
-        <p>Holds the key. Wasn't there for any of it. Opens the capsule when it finally arrives.</p>
+        <p>Uses the recipient secret, and any gate contributions, to recover it.</p>
       </div>
     </div>
   </div>
@@ -231,54 +230,50 @@
 <section id="roles"><div class="wrap"><div class="sec">
   <div class="k-label">The split</div>
   <div>
-    <h2>Three jobs that were never the same job.</h2>
-    <p>A plain ciphertext welds them together: whoever stores it learns nothing and can vouch for
-      nothing, so you end up trusting storage metadata until the day you open it. A capsule takes
-      the three roles apart and gives each one exactly what it needs.</p>
+    <h2>Storage should not require trust.</h2>
+    <p>With normal encryption, a stored blob is opaque. The storage layer cannot prove it contains the
+      right secret. ve-capsule adds that proof without giving storage the key.</p>
 
     <h3><span class="n">01</span>The sealer</h3>
-    <p class="muted">Needs the secret and the unsealer's public key — no ceremony, no counterparty
-      online. Seal, hand the bytes to whoever keeps them, done. The capsule never needs its maker again.</p>
+    <p class="muted">Needs the secret, the recipient public key, and context bytes. The result is
+      canonical bytes you can store anywhere.</p>
 <pre><span class="k">let</span> capsule = <span class="t">Capsule</span>::builder(&amp;secret, &amp;recipient, &amp;ctx).seal()?;
-<span class="k">let</span> bytes   = capsule.to_canonical_bytes();   <span class="c">// opaque — store them anywhere</span></pre>
+<span class="k">let</span> bytes   = capsule.to_canonical_bytes();   <span class="c">// opaque; store them anywhere</span></pre>
 
     <h3><span class="n">02</span>The verifier</h3>
-    <p class="muted">Needs the capsule and public keys, nothing else: a short non-interactive proof
-      shows it holds exactly the private key for <code>public_key</code>. Check it at deposit; check it
-      every night for years. Nothing the verifier holds can open it.</p>
+    <p class="muted">Needs the capsule and public keys. The proof shows the capsule opens to
+      <code>public_key</code>. Nothing used for verification can open it.</p>
 <pre><span class="c">// no secret anywhere in this call</span>
 capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <span class="c">// proven: the right key is inside. Still sealed.</span></pre>
 
     <h3><span class="n">03</span>The unsealer</h3>
-    <p class="muted">Needs the recipient key — and wasn't there for any of it, not the sealing, not the
-      audits. When the capsule arrives, verify once more and open.</p>
+    <p class="muted">Needs the recipient secret. Verify the capsule first, then recover the sealed
+      scalar.</p>
 <pre><span class="k">let</span> verified = <span class="t">Capsule</span>::from_canonical_bytes(&amp;bytes)?
     .verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <span class="k">let</span> secret   = verified.unseal(&amp;recipient_secret, &amp;[])?;</pre>
 
-    <p class="muted"><code>ctx</code> binds every one of these calls to your application, so a capsule
-      can't be lifted out of it and replayed somewhere else.</p>
+    <p class="muted"><code>ctx</code> binds the capsule to your application, so the same bytes cannot be
+      replayed in another context.</p>
   </div>
 </div></div></section>
 
 <section id="capabilities"><div class="wrap"><div class="sec">
   <div class="k-label">What it does</div>
   <div>
-    <h2>Blob in, proof out, secret still shut.</h2>
-    <p>The crate surface is deliberately narrow: callers hand it scalar material,
-      public keys, and context bytes, and get back canonical artifacts they can
-      store, verify, strip, sign, or recover.</p>
+    <h2>Inputs and outputs.</h2>
+    <p>Callers pass in scalar material, public keys, and context bytes. ve-capsule returns canonical
+      artifacts for storage, verification, signing, and recovery.</p>
     <ul class="uses">
       <li><span class="u">Seal</span>
-        <p class="d">Encrypt one scalar to a recipient public key, with optional access gates and
-        application context bound into the statement.</p></li>
+        <p class="d">Encrypt one scalar to a recipient public key. Optional gates add approval
+        requirements.</p></li>
       <li><span class="u">Verify</span>
-        <p class="d">Check the capsule proves the expected public target without learning the scalar
-        or needing the recipient secret.</p></li>
+        <p class="d">Check the capsule opens to the expected public key without learning the scalar.</p></li>
       <li><span class="u">Recover</span>
-        <p class="d">Open with the recipient secret, plus any required gate contributions, and reject
-        if the recovered scalar does not match the expected public key.</p></li>
+        <p class="d">Open with the recipient secret and any required approvals. Reject if the result
+        does not match the expected public key.</p></li>
     </ul>
   </div>
 </div></div></section>
@@ -286,38 +281,33 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <section id="gates"><div class="wrap"><div class="sec">
   <div class="k-label">Consent</div>
   <div>
-    <h2>When opening should need permission.</h2>
-    <p>Seal with <em>gates</em> — extra public keys whose holders must each contribute before the
-      capsule opens. The unsealer's key alone is no longer enough: recovery becomes a quorum decision,
-      and a gate can itself be a threshold key no single participant holds.</p>
+    <h2>Add approvals when one key is not enough.</h2>
+    <p>A gate is an extra public key that must contribute before the capsule opens. The recipient key
+      can open alone only when there are no gates. A gate can also be a threshold key.</p>
 <pre><span class="k">let</span> capsule = <span class="t">Capsule</span>::builder(&amp;secret, &amp;recipient, &amp;ctx)
     .access_keys(&amp;quorum)
     .seal()?;   <span class="c">// now unsealing requires their contributions too</span></pre>
-    <p class="muted">A verified capsule can drop its proof into a compact core, and a quorum signature
-      over its canonical statement takes the proof's place — BIP-340 Schnorr,
-      FROST(secp256k1)-TR among them — so an authorizer can't be duped into helping
-      open an attacker's fabricated ciphertext.</p>
+    <p class="muted">A verified capsule can be stripped down to a compact core. A quorum signature over
+      that core can stand in for the original proof, so approvers do not help open fabricated
+      ciphertexts.</p>
   </div>
 </div></div></section>
 
 <section id="compact"><div class="wrap"><div class="sec">
   <div class="k-label">Compact</div>
   <div>
-    <h2>Additive pieces, compact recovery.</h2>
-    <p>When an application represents a scalar as additive pieces, seal each piece and bundle the
-      capsules into a <em>Case</em>. Verifying it is one equation —
-      <code>Σ Mⱼ == M</code> — every piece present, and together they reconstitute the expected public key.
-      For recovery you don't have to carry the proofs: alongside each capsule a producer seals a
-      65-byte recovery hint, and the hints assemble into one compact recovery payload. If your scheme
-      needs interpolation weights or other coefficients, apply them before sealing; the payload carries
-      already-prepared contributions.</p>
+    <h2>Split the secret. Keep recovery small.</h2>
+    <p>If a scalar is stored as additive pieces, seal each piece and bundle the capsules into a
+      <em>Case</em>. One check, <code>Σ Mⱼ == M</code>, proves the pieces add up to the expected public
+      key. For recovery, each producer also emits a 65-byte hint. The hints form a compact recovery
+      payload. If you need interpolation weights, apply them before sealing.</p>
     <div class="stat">
       <span class="from">≈5.4 KB / proof</span>
       <span class="arrow">→</span>
       <span class="glyph" aria-hidden="true"></span>
       <span class="big">65 <span>bytes a piece</span></span>
-      <span class="cap"><b>Recipient-only</b> — one ECDH, one hash, and one subtraction per piece.
-        The recovered sum is checked against the expected public key, not the payload's copy.</span>
+      <span class="cap"><b>Recipient-only</b>: one ECDH, one hash, and one subtraction per piece.
+        The recovered sum must match the expected public key.</span>
     </div>
 <pre><span class="k">let</span> rctx = <span class="t">RecoveryContext</span> {
     certified_target: &amp;expected_public_key,
@@ -325,7 +315,7 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
     epoch,
 };
 
-<span class="c">// each producer seals a 65-byte hint beside its capsule; gather a compact payload</span>
+<span class="c">// producers seal hints beside their capsules; the payload carries no proofs</span>
 <span class="k">let</span> hint = seal_recovery_hint(&contribution, &recipient, &rctx, idx, &mut rng)?;
 <span class="k">let</span> payload_bytes =
     assemble_recipient_recovery_payload(&expected_public_key, &hints)?;   <span class="c">// no proof bytes</span></pre>
@@ -335,27 +325,23 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <section id="curve"><div class="wrap"><div class="sec">
   <div class="k-label">One curve</div>
   <div>
-    <h2>Native to secp256k1, end to end.</h2>
-    <p>The recipient, the gates, the recovered secret, and the quorum signature all live on secp256k1 —
-      no class group, pairing curve, or RSA modulus standing beside your stack. It reuses the key types
-      and signers Bitcoin, FROST, and Taproot already speak, and a gated recovery is authorized by the
-      same kind of quorum signature your threshold signer already produces.</p>
+    <h2>Native to secp256k1.</h2>
+    <p>The recipient, gates, recovered secret, and quorum signature all live on secp256k1. No class
+      group, pairing curve, or RSA modulus. It reuses the keys and signers already used by Bitcoin,
+      FROST, and Taproot systems.</p>
   </div>
 </div></div></section>
 
 <section id="not-just-bulletproofs"><div class="wrap"><div class="sec">
   <div class="k-label">Why not just BP++?</div>
   <div>
-    <h2>Bulletproofs prove a fact. ve-capsule ships the sealed object.</h2>
-    <p>A Bulletproof can prove committed numbers are in range. That is useful, but it is not the
-      whole product. It does not say who can open the ciphertext, how the opened secret is checked
-      against the expected public key, how approvers contribute without leaking their keys, or how a
-      proof-heavy artifact turns into a compact recovery payload.</p>
-    <p class="muted">ve-capsule uses Bulletproofs++ inside the seal proof, then adds the missing
-      protocol: segmented EC-ElGamal encryption, context binding, recipient opening, consent gates,
-      quorum signatures for stripped cores, Cases for additive pieces, and recovery hints for compact
-      payloads. Bulletproofs are the receipt for one claim; ve-capsule is the sealed package and the
-      rules for opening it.</p>
+    <h2>Bulletproofs are only one part.</h2>
+    <p>A Bulletproof can prove committed numbers are in range. It does not define who can open the
+      ciphertext, how recovery is checked, how approvers contribute, or how a large proof becomes a
+      compact recovery payload.</p>
+    <p class="muted">ve-capsule uses Bulletproofs++ for the range proof. Around it, the crate provides
+      encryption, context binding, recipient opening, consent gates, quorum signatures for stripped
+      cores, Cases for additive pieces, and recovery hints.</p>
   </div>
 </div></div></section>
 
@@ -363,21 +349,13 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
   <div class="k-label">Under the hood</div>
   <div>
     <h2>Segmented EC-ElGamal, one transcript.</h2>
-    <p class="muted">The sealed scalar is encrypted in small segments, and a single aggregated
-      <strong>Bulletproofs++</strong> range proof covers every segment and carry in the statement at
-      once, alongside a linking sigma and a batched DLEQ, all on one Fiat–Shamir transcript. That's
-      what keeps a capsule at a few kilobytes and verification at a handful of multiscalar equations:
-      the proof is logarithmic in the statement; the proven ranges are exact, so a capsule that
-      verifies is a capsule that decrypts; and there's no trusted setup — every generator is a
-      nothing-up-my-sleeve point each party re-derives locally (the
-      <a href="https://eprint.iacr.org/2022/510">EUROCRYPT 2024 construction</a>, implemented with the
-      corrections from <a href="https://github.com/cypherstack/bppp-review">Cypher Stack's independent
-      review</a>). Every capsule binds to exactly its participants and its context, checkable by anyone
-      without the secret. The surface is blob-in / blob-out: <code>#![forbid(unsafe_code)]</code>,
-      secrets zeroize on drop, and the proof algebra stays crate-private so a caller can't reach past
-      the consent-gated API. Sealing and unsealing aren't constant-time — run them where the secret
-      already lives.</p>
-    <p class="muted">The full construction and its security argument are in
+    <p class="muted">The scalar is encrypted in small segments. One aggregated
+      <strong>Bulletproofs++</strong> proof covers the segments and carries, with a linking sigma and
+      batched DLEQ on the same Fiat-Shamir transcript. Verification is a handful of multiscalar
+      equations, and there is no trusted setup. Each capsule binds to its keys and context. Secrets
+      zeroize on drop. The proof algebra stays crate-private. Sealing and unsealing are not
+      constant-time; run them where the secret already lives.</p>
+    <p class="muted">The construction and security argument are in
       <a href="https://github.com/Jud/ve-capsule/blob/main/docs/ec-segve-soundness.md">the specification →</a></p>
   </div>
 </div></div></section>
