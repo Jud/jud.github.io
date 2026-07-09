@@ -411,8 +411,8 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
     <h3><span class="n">03</span>Open</h3>
     <p class="muted">Needs the recipient secret. Verify first, then recover. Opening re-checks that
       the recovered scalar matches the expected public key and fails closed otherwise.</p>
-<pre><span class="k">let</span> verified = <span class="t">Capsule</span>::from_canonical_bytes(&amp;bytes)?
-    .verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
+<pre><span class="k">let</span> capsule  = <span class="t">Capsule</span>::from_canonical_bytes(&amp;bytes)?;
+<span class="k">let</span> verified = capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <span class="k">let</span> secret   = verified.unseal(&amp;recipient_secret, &amp;[])?;</pre>
 
     <p class="muted"><code>ctx</code> binds the capsule to your application transcript — package id,
@@ -568,7 +568,7 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
         </li>
       </ul>
       <p class="keep"><b>After verify, most of this can leave.</b> Strip drops everything but the
-        envelope and ElGamal limbs → <b>778-byte</b> opening core per piece. Or leave the cores
+        core envelope and ElGamal limbs → <b>778-byte</b> opening core per piece. Or leave the cores
         behind and keep a <b>65-byte</b> recovery hint per piece. The proofs are for the group at
         setup; proof-stripped recovery needs the ciphertexts, hint recovery needs the separately
         sealed shadows, and both re-anchor on certified <code>M</code>.</p>
@@ -604,9 +604,9 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 };
 
 <span class="c">// producers seal hints beside their capsules; the payload carries no proofs</span>
-<span class="k">let</span> hint = seal_recovery_hint(&contribution, &recipient, &rctx, idx, &mut rng)?;
+<span class="k">let</span> hint = seal_recovery_hint(&amp;contribution, &amp;recipient, &amp;rctx, idx, &amp;mut rng)?;
 <span class="k">let</span> payload_bytes =
-    assemble_recipient_recovery_payload(&expected_public_key, &hints)?;   <span class="c">// no proof bytes</span></pre>
+    assemble_recipient_recovery_payload(&amp;expected_public_key, &amp;hints)?;   <span class="c">// no proof bytes</span></pre>
   </div>
 </div></div></section>
 
@@ -635,10 +635,14 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
       or how a multi-kilobyte proof becomes a small cold-storage payload. Those are the seams
       applications actually need.</p>
     <p class="muted">ve-capsule sits in the Camenisch–Shoup verifiable-encryption tradition, adapted
-      to segmented EC-ElGamal on native secp256k1. The range core is the reciprocal argument of
+      to segmented EC-ElGamal on native secp256k1; its closest prior instantiation is ZenGo's
+      <a href="https://github.com/ZenGo-X/dlog-verifiable-enc">Juggling</a>, which sealed a secp256k1
+      scalar the same way — ve-capsule is a hardened re-instantiation of that construction. The range core is
+      the reciprocal argument of
       <a href="https://eprint.iacr.org/2022/510">Eagen, Kanjalkar, Ruffing, and Nick</a> (EUROCRYPT
       2024), implemented from the paper with corrections from
-      <a href="https://github.com/cypherstack/bppp-review">Cypher Stack's review</a>. Around that:
+      <a href="https://github.com/cypherstack/bppp-review">Cypher Stack's review</a> — which corrected
+      specific lemmas but did not certify the argument overall. Around that:
       context binding, recipient opening, consent gates, quorum signatures for stripped cores, Cases
       for additive pieces, and recovery hints. The proof algebra stays crate-private so callers
       cannot reach past the consent-gated surface.</p>
@@ -661,8 +665,9 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
       unsealing are not constant-time — run them where the secret already lives; verification only
       needs public data.</p>
     <p class="muted">The claim is knowledge-sound binding and zero-knowledge in the random-oracle
-      model, with secrecy only beyond the public commitment <code>C = m·G</code>. Simulation-sound
-      extractability and UC composition are not claimed.</p>
+      model, with secrecy relative to the public commitment <code>C = m·G</code>. A guessable scalar
+      is already checkable against that <code>C</code> by anyone, so do not escrow low-entropy secrets
+      expecting secrecy. Simulation-sound extractability and UC composition are not claimed.</p>
     <p class="muted">The construction and security argument are in
       <a href="https://github.com/Jud/ve-capsule/blob/main/docs/ec-segve-soundness.md">the specification →</a></p>
   </div>
