@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ve-capsule — self-verifying recovery shares</title>
-<meta name="description" content="Create self-verifying recovery artifacts for issued secp256k1 shares. Verify a sealed share before the recovery device ever opens it.">
+<meta name="description" content="Verifiable encryption for secp256k1 recovery shares. When multiple parties seal pieces of a key, anyone can check each capsule against its public commitment — without opening it, and without the recipient online.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -66,7 +66,7 @@
   h1 .hl{display:block;white-space:nowrap}
   h1 .hl:nth-child(odd){text-align:right}
   h1 em{font-weight:400;letter-spacing:0}
-  .lede{font-size:1.18rem;line-height:1.55;color:var(--soft);max-width:38rem;margin:2.2rem 0 0}
+  .lede{font-size:1.18rem;line-height:1.55;color:var(--soft);max-width:40rem;margin:2.2rem 0 0}
   .lede b{color:var(--ink);font-weight:600}
   .facts{font-family:var(--mono);font-size:.76rem;color:var(--faint);margin-top:2.4rem;letter-spacing:.02em}
   @media (max-width:640px){header{padding:3.6rem 0 3rem}.lede{font-size:1.05rem}}
@@ -123,7 +123,8 @@
   .sec > div{min-width:0}
   .sec > .k-label{position:sticky;top:4.8rem;align-self:start}
   @media (max-width:840px){.sec{grid-template-columns:1fr;gap:1.1rem}.sec > .k-label{position:static}}
-  h2{font-family:var(--serif);font-weight:600;font-size:2rem;letter-spacing:-.005em;line-height:1.15;margin:0}
+  h2{font-family:var(--serif);font-weight:600;font-size:2rem;letter-spacing:-.005em;line-height:1.15;margin:0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   p{margin:1rem 0 0}
   p.muted{color:var(--soft);font-size:.95rem}
   h3{font-family:var(--mono);font-size:.78rem;font-weight:600;letter-spacing:.12em;
@@ -160,6 +161,106 @@
   .stat .cap{flex-basis:100%;font-size:.92rem;color:var(--soft);margin:.4rem 0 0}
   .stat .cap b{color:var(--ink)}
 
+  /* anatomy: case of capsules → zoom one capsule */
+  .anatomy-stack{margin-top:1.6rem}
+  .anatomy{border:1px solid var(--line);border-radius:12px;
+    background:var(--panel);padding:1.35rem 1.4rem 1.2rem}
+  .anatomy .bar-label{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--faint);margin-bottom:.7rem}
+  .anatomy .bar-label b{color:var(--ink);font-weight:600;letter-spacing:.02em;text-transform:none;
+    font-size:.84rem;font-variant-numeric:tabular-nums}
+  .bytebar{display:flex;height:2.6rem;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+  .bytebar span{display:block;min-width:2px;height:100%;position:relative}
+  .bytebar span[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);
+    transform:translateX(-50%);background:var(--ink);color:var(--bg);font-family:var(--mono);
+    font-size:.68rem;letter-spacing:.02em;padding:.28rem .45rem;border-radius:4px;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:opacity .15s;z-index:2}
+  .bytebar span:hover::after{opacity:1}
+  /* capsule wire segments */
+  .bytebar .b-env{background:var(--faint);flex:51 0 0}
+  .bytebar .b-elg{background:color-mix(in srgb,var(--wax) 45%,var(--line));flex:726 0 0}
+  .bytebar .b-com{background:color-mix(in srgb,var(--wax) 62%,var(--line));flex:726 0 0}
+  .bytebar .b-bp{background:color-mix(in srgb,var(--wax) 78%,var(--ink) 8%);flex:688 0 0}
+  .bytebar .b-car{background:color-mix(in srgb,var(--wax) 88%,var(--ink) 18%);flex:1045 0 0}
+  .bytebar .b-lnk{background:var(--wax);flex:2178 0 0}
+
+  /* case: row of piece-capsules */
+  .case-row{display:grid;grid-template-columns:1fr 1.45fr 1fr;gap:1.15rem;align-items:end;margin-top:.35rem}
+  .piece{position:relative;min-width:0}
+  .piece .plab{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--faint);margin-bottom:.45rem;display:flex;justify-content:space-between;align-items:baseline;
+    gap:.5rem;min-height:1em}
+  .piece .plab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .piece .plab em{font-style:normal;color:var(--soft);flex:none}
+  .piece .shell{position:relative}
+  .piece .mini{height:1.55rem;border-radius:6px;opacity:.55;filter:saturate(.85)}
+  .piece.dim .plab{opacity:.7}
+  .piece.focus{z-index:1;padding:0 .55rem .95rem}
+  .piece.focus .mini{height:2rem;opacity:1;filter:none;box-shadow:0 0 0 1px color-mix(in srgb,var(--wax) 55%,transparent)}
+  .piece.focus .plab{color:var(--wax)}
+  .piece.focus .plab em{color:var(--ink);font-weight:600}
+  /* start / end brackets on the focused capsule bar only */
+  .piece.focus .shell::before,.piece.focus .shell::after{
+    content:"";position:absolute;top:-5px;bottom:-5px;width:10px;pointer-events:none;
+    border-color:var(--wax);border-style:solid}
+  .piece.focus .shell::before{left:-8px;border-width:2px 0 2px 2px;border-radius:4px 0 0 4px}
+  .piece.focus .shell::after{right:-8px;border-width:2px 2px 2px 0;border-radius:0 4px 4px 0}
+  /* labels live under the bar so they never fight the piece title row */
+  .piece .edge{position:absolute;top:calc(100% + 8px);font-family:var(--mono);font-size:.62rem;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--wax);font-weight:600;line-height:1}
+  .piece .edge.start{left:-8px}
+  .piece .edge.end{right:-8px;text-align:right}
+  .case-eq{margin-top:.55rem;font-family:var(--mono);font-size:.78rem;color:var(--soft);
+    text-align:center;letter-spacing:.02em}
+  .case-eq b{color:var(--ink);font-weight:600}
+
+  /* zoom connector case → capsule */
+  .zoom{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.5rem;
+    margin:0;padding:.15rem 0 .35rem;position:relative}
+  .zoom .rail{height:1px;background:var(--line)}
+  .zoom .mid{display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.55rem 0 .2rem}
+  .zoom .stem{width:1px;height:1.6rem;background:var(--wax);position:relative}
+  .zoom .stem::after{content:"";position:absolute;left:50%;bottom:-1px;width:7px;height:7px;
+    border-right:1.5px solid var(--wax);border-bottom:1.5px solid var(--wax);
+    transform:translateX(-50%) rotate(45deg)}
+  .zoom .zlab{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--wax);font-weight:600;white-space:nowrap}
+
+  .parts{list-style:none;margin:1.15rem 0 0;padding:0}
+  .parts li{display:grid;grid-template-columns:0.7rem minmax(0,1fr) 6.5rem;gap:.75rem;align-items:start;
+    padding:.55rem 0;border-top:1px solid var(--line);font-size:.92rem}
+  .parts li:last-child{padding-bottom:0}
+  .parts .sw{width:.7rem;height:.7rem;border-radius:2px;margin-top:.35rem}
+  .parts .nm{font-weight:600;letter-spacing:-.01em;min-width:0}
+  .parts .nm span{display:block;font-weight:400;color:var(--soft);font-size:.88rem;
+    line-height:1.45;margin-top:.15rem}
+  .parts .sz{font-family:var(--mono);font-size:.78rem;color:var(--ink);white-space:nowrap;
+    padding-top:.15rem;text-align:right;font-variant-numeric:tabular-nums}
+  .parts .sz small{display:block;color:var(--faint);font-size:.7rem;margin-top:.1rem;text-align:right}
+  .sw-env{background:var(--faint)}
+  .sw-elg{background:color-mix(in srgb,var(--wax) 45%,var(--line))}
+  .sw-com{background:color-mix(in srgb,var(--wax) 62%,var(--line))}
+  .sw-bp{background:color-mix(in srgb,var(--wax) 78%,var(--ink) 8%)}
+  .sw-car{background:color-mix(in srgb,var(--wax) 88%,var(--ink) 18%)}
+  .sw-lnk{background:var(--wax)}
+  .keep{margin-top:1.1rem;padding-top:1rem;border-top:1px dashed var(--line);
+    font-size:.9rem;color:var(--soft);line-height:1.5}
+  .keep b{color:var(--ink)}
+  .keep code{font-size:.84em}
+  @media (max-width:640px){
+    .case-row{grid-template-columns:1fr;gap:1rem}
+    .piece.dim{display:none}
+    .piece .shell{margin:0 .2rem}
+    .zoom{grid-template-columns:1fr auto 1fr}
+  }
+  @media (max-width:560px){
+    h2{white-space:normal}
+    .bytebar{height:2rem}
+    .bytebar span[data-tip]::after{display:none}
+    .parts li{grid-template-columns:0.7rem minmax(0,1fr) auto;gap:.55rem .7rem}
+  }
+
   footer{border-top:1px solid var(--line);padding:2.4rem 0 5.5rem}
   footer .wrap{display:flex;gap:1.4rem;flex-wrap:wrap;align-items:center;
     font-family:var(--mono);font-size:.78rem;color:var(--soft)}
@@ -185,6 +286,7 @@
   <span class="links">
     <a href="#roles" class="opt">artifact</a>
     <a href="#gates" class="opt">gates</a>
+    <a href="#anatomy" class="opt">anatomy</a>
     <a href="#compact" class="opt">payloads</a>
     <a href="#hood" class="opt">under the hood</a>
     <a href="https://github.com/Jud/ve-capsule">github</a>
@@ -192,17 +294,21 @@
 </div></nav>
 
 <header><div class="wrap">
-  <div class="eyebrow">ve-capsule · self-verifying recovery artifacts</div>
+  <div class="eyebrow">ve-capsule · verifiable encryption on secp256k1</div>
   <h1>
     <span class="hl">Recovery</span><span class="hl">shares.</span>
-    <span class="hl">Verified</span><span class="hl">at setup.</span>
+    <span class="hl">Proven</span><span class="hl">together.</span>
   </h1>
-  <p class="lede">ve-capsule creates self-verifying recovery artifacts for issued secp256k1 shares.
-    The active signers can seal a recovery share to an offline device, while anyone can verify it matches
-    the intended public share before that device ever opens it.</p>
+  <p class="lede">When several parties or devices each seal a piece of a key, everyone has the same
+    problem: ciphertext alone is a promise, and hoping the others sealed the right thing is not a
+    security model. <b>ve-capsule</b> attaches a public proof to each seal. Any participant can check
+    that another’s capsule encrypts the scalar behind the claimed public share <code>M = m·G</code> —
+    without opening it, without the recipient being online, and without learning anything beyond that
+    already-public discrete-log instance. Lying (or honest mistakes) fails at setup, in front of
+    everyone who has an interest in the outcome.</p>
   <div class="facts">secp256k1 · segmented EC-ElGamal · Bulletproofs++ · compact recovery payloads · no unsafe</div>
 
-  <div class="rail" aria-label="A recovery artifact travels from the issuer, past the verifier who checks it without opening it, to the recovery device that opens it.">
+  <div class="rail" aria-label="A recovery artifact travels from the sealer, past other participants who check it without opening it, to the recovery device that opens it.">
     <div class="track" aria-hidden="true">
       <span class="tick t1"></span><span class="tick t2"></span><span class="tick t3"></span>
       <span class="pulse"></span>
@@ -212,16 +318,16 @@
     </div>
     <div class="stations">
       <div class="st">
-        <div class="k-label">01 · the issuer</div>
-        <p>Seals an issued share to the recovery device's public key.</p>
+        <div class="k-label">01 · seal</div>
+        <p>Each party encrypts its share to the recovery public key. Optionally behind consent gates.</p>
       </div>
       <div class="st mid">
-        <div class="k-label">02 · the verifier</div>
-        <p>Checks the artifact matches the intended public share.</p>
+        <div class="k-label">02 · verify</div>
+        <p>Everyone else can check the claim. Nothing used here opens the capsule or gives a decryption key.</p>
       </div>
       <div class="st end">
-        <div class="k-label">03 · the device</div>
-        <p>Uses its recovery secret, and any gate contributions, to open it later.</p>
+        <div class="k-label">03 · open</div>
+        <p>The recipient secret — plus any required gate contributions — recovers the share later.</p>
       </div>
     </div>
   </div>
@@ -230,51 +336,62 @@
 <section id="roles"><div class="wrap"><div class="sec">
   <div class="k-label">Artifact</div>
   <div>
-    <h2>The bytes state what they are.</h2>
-    <p>Normal encryption gives you opaque bytes. A ve-capsule artifact carries a public proof that the
-      sealed scalar matches the public share it claims to protect. The recovery device can be offline
-      during setup; other participants can still audit the artifact before relying on it.</p>
+    <h2>Opaque bytes. Public check.</h2>
+    <p>Ordinary encryption is a promise between sealer and recipient. In a multi-party setup that is
+      not enough: the other signers, the recovery coordinator, anyone who will depend on the artifact
+      later needs the same guarantee you do. A capsule is still storage-friendly bytes — a few
+      kilobytes you can hand around — but its envelope exposes the public claim <code>C = m·G</code>
+      and its proof binds that claim to the ElGamal limbs. Peers check that at seal time, while the
+      recovery device may still be offline. A wrong or empty share fails in front of the room, not
+      months later in a crisis.</p>
 
-    <h3><span class="n">01</span>The issuer</h3>
-    <p class="muted">Needs the issued share, the recovery device public key, and context bytes.
-      The result is canonical bytes you can store anywhere.</p>
+    <h3><span class="n">01</span>Seal</h3>
+    <p class="muted">Needs the issued share, the recovery public key, and context bytes.
+      What comes back is canonical bytes — keep them wherever you keep other blobs.</p>
 <pre><span class="k">let</span> capsule = <span class="t">Capsule</span>::builder(&amp;secret, &amp;recipient, &amp;ctx).seal()?;
-<span class="k">let</span> bytes   = capsule.to_canonical_bytes();   <span class="c">// opaque; store them anywhere</span></pre>
+<span class="k">let</span> bytes   = capsule.to_canonical_bytes();   <span class="c">// just bytes; store them anywhere</span></pre>
 
-    <h3><span class="n">02</span>The verifier</h3>
-    <p class="muted">Needs the capsule and public keys. The proof shows the sealed share corresponds
-      to <code>public_key</code>. Nothing used for verification can open it.</p>
+    <h3><span class="n">02</span>Verify</h3>
+    <p class="muted">Needs the capsule and public keys only. A passing check means the encrypted limbs
+      reassemble to a scalar whose commitment is <code>public_key</code>. Nothing in this call can open
+      the capsule.</p>
 <pre><span class="c">// no secret anywhere in this call</span>
 capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
-<span class="c">// proven: the sealed scalar matches public_key. Still sealed.</span></pre>
+<span class="c">// proven: limbs reassemble to the dlog of public_key (= M). still sealed.</span></pre>
 
-    <h3><span class="n">03</span>The recovery device</h3>
-    <p class="muted">Needs the recipient secret. Verify the capsule first, then recover the sealed
-      share.</p>
+    <h3><span class="n">03</span>Open</h3>
+    <p class="muted">Needs the recipient secret. Verify first, then recover. Opening re-checks that
+      the recovered scalar matches the expected public key and fails closed otherwise.</p>
 <pre><span class="k">let</span> verified = <span class="t">Capsule</span>::from_canonical_bytes(&amp;bytes)?
     .verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <span class="k">let</span> secret   = verified.unseal(&amp;recipient_secret, &amp;[])?;</pre>
 
-    <p class="muted"><code>ctx</code> binds the capsule to your application, so the same bytes cannot be
-      replayed in another context.</p>
+    <p class="muted"><code>ctx</code> binds the capsule to your application transcript — package id,
+      epoch, purpose — so the same bytes cannot be lifted and replayed somewhere else.</p>
   </div>
 </div></div></section>
 
 <section id="capabilities"><div class="wrap"><div class="sec">
-  <div class="k-label">What it does</div>
+  <div class="k-label">Where it helps</div>
   <div>
-    <h2>A small surface.</h2>
-    <p>Callers pass in scalar material, public keys, and context bytes. ve-capsule returns canonical
-      artifacts for storage, verification, and recovery.</p>
+    <h2>When more than one party cares.</h2>
+    <p>The pattern is multi-party: several devices or people each contribute sealed material, and
+      everyone who will live with the result needs to know the others did not seal garbage, withhold
+      a real share, or “helpfully” substitute a different key. Verifiable encryption makes that check
+      public and offline-friendly. Catching your own mistakes is a free side effect.</p>
     <ul class="uses">
-      <li><span class="u">Seal</span>
-        <p class="d">Encrypt one issued share to a recovery public key. Optional gates add approval
-        requirements.</p></li>
-      <li><span class="u">Verify</span>
-        <p class="d">Prove the capsule matches the expected public share, without learning the scalar.</p></li>
-      <li><span class="u">Recover</span>
-        <p class="d">Open with the recipient secret and any required approvals. Reject if the result
-        does not match the expected public key.</p></li>
+      <li><span class="u">Threshold recovery</span>
+        <p class="d">Each participant seals their piece toward the same recipient. The group verifies
+        the Case so the pieces add up to the certified public key before anyone walks away.</p></li>
+      <li><span class="u">Offline recipient</span>
+        <p class="d">The recovery device does not need to be online for setup. Peers still confirm
+        every seal against the expected public shares before relying on the package.</p></li>
+      <li><span class="u">Consent-gated recovery</span>
+        <p class="d">Require one or more access keys (or a threshold key no single person holds) to
+        contribute before the recipient can open.</p></li>
+      <li><span class="u">Self-audit &amp; cold storage</span>
+        <p class="d">You can also re-verify your own backups without decrypting them, and after
+        group verification drop the multi-kilobyte proofs for a small recipient-only payload.</p></li>
     </ul>
   </div>
 </div></div></section>
@@ -282,33 +399,179 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <section id="gates"><div class="wrap"><div class="sec">
   <div class="k-label">Consent</div>
   <div>
-    <h2>Add approvals when recovery should require consent.</h2>
-    <p>A gate is an extra public key that must contribute before the capsule opens. The recipient key
-      can open alone only when there are no gates. A gate can also be a threshold key.</p>
+    <h2>Gate recovery behind consent.</h2>
+    <p>A gate is another public key that has to contribute before unseal succeeds. With no gates,
+      the recipient opens alone. With gates, every named key takes part — and a gate can itself be a
+      multi-party key, so no single person holds the whole authorizer scalar. To the capsule that is
+      just another access key; the group produces its contribution together.</p>
 <pre><span class="k">let</span> capsule = <span class="t">Capsule</span>::builder(&amp;secret, &amp;recipient, &amp;ctx)
     .access_keys(&amp;quorum)
-    .seal()?;   <span class="c">// now unsealing requires their contributions too</span></pre>
-    <p class="muted">A verified capsule can be stripped down to a compact core. A quorum signature over
-      that core can stand in for the original proof, so approvers do not help open fabricated
-      ciphertexts.</p>
+    .seal()?;   <span class="c">// unsealing now needs their contributions too</span></pre>
+    <p class="muted">After verification you can strip a capsule down to a compact opening core. For
+      gated recovery, a quorum signature over the canonical attestation statement — core digest,
+      recipient, gate roster, context, and params — stands in for the original proof. The built-in
+      scheme is BIP-340 Schnorr; FROST(secp256k1)-TR signatures verify as BIP-340 under the
+      caller-supplied x-only key (Taproot key-path users supply the tweaked output key). The
+      signature is there for a concrete reason: a stripped core has no proof left, so without an
+      attestation an attacker could hand an authorizer a fabricated core and harvest a partial
+      decryption (a static-DH oracle on their key). Recipient-only recovery needs no signature;
+      nobody contributes, so there is no oracle to open.</p>
+  </div>
+</div></div></section>
+
+<section id="anatomy"><div class="wrap"><div class="sec">
+  <div class="k-label">Anatomy</div>
+  <div>
+    <h2>A Case is capsules.</h2>
+    <p>When a secret is already additive pieces — the usual shape for threshold and MPC recovery —
+      each party seals its own piece. A <em>Case</em> is that bundle: same recipient, same access
+      policy, same context; different piece commitments <code>Mⱼ</code>. The group check is one
+      equation, <code>Σ Mⱼ == M</code>. Below: three piece-capsules in a Case; brackets mark where
+      one capsule starts and stops; the wire breakdown under the arrow is that capsule, expanded.</p>
+
+    <div class="anatomy-stack">
+    <div class="anatomy" aria-label="A Case of three piece-capsules">
+      <div class="bar-label">
+        <span>a case · three piece-capsules</span>
+        <b>3 × 5,414 B</b>
+      </div>
+      <div class="case-row">
+        <div class="piece dim">
+          <div class="plab"><span>piece 0</span><em>M₀</em></div>
+          <div class="shell">
+          <div class="bytebar mini" aria-hidden="true">
+            <span class="b-env"></span><span class="b-elg"></span><span class="b-com"></span>
+            <span class="b-bp"></span><span class="b-car"></span><span class="b-lnk"></span>
+          </div>
+          </div>
+        </div><div class="piece focus">
+          <div class="plab"><span>piece 1</span><em>M₁</em></div>
+          <div class="shell">
+          <span class="edge start">start</span>
+          <span class="edge end">end</span>
+          <div class="bytebar mini" aria-hidden="true">
+            <span class="b-env"></span><span class="b-elg"></span><span class="b-com"></span>
+            <span class="b-bp"></span><span class="b-car"></span><span class="b-lnk"></span>
+          </div>
+          </div>
+        </div><div class="piece dim">
+          <div class="plab"><span>piece 2</span><em>M₂</em></div>
+          <div class="shell">
+          <div class="bytebar mini" aria-hidden="true">
+            <span class="b-env"></span><span class="b-elg"></span><span class="b-com"></span>
+            <span class="b-bp"></span><span class="b-car"></span><span class="b-lnk"></span>
+          </div>
+          </div>
+        </div></div>
+      <p class="case-eq">verify: <b>M₀ + M₁ + M₂ = M</b> · shared (recipient, gates, ctx)</p>
+    </div>
+
+    <div class="zoom" aria-hidden="true">
+      <span class="rail"></span>
+      <div class="mid">
+        <span class="stem"></span>
+        <span class="zlab">zoom · one capsule</span>
+      </div>
+      <span class="rail"></span>
+    </div>
+
+    <div class="anatomy" id="capsule-wire" aria-label="Byte breakdown of one sealed capsule">
+      <div class="bar-label">
+        <span>one capsule on the wire</span>
+        <b>5,414 bytes</b>
+      </div>
+      <div class="bytebar" role="img" aria-label="Proportional bar: envelope 51, ElGamal 726, Pedersen commitments 726, Bulletproofs++ 688, carry chain 1045, linking sigma 2178">
+        <span class="b-env" data-tip="envelope · 51 B"></span>
+        <span class="b-elg" data-tip="ElGamal · 726 B"></span>
+        <span class="b-com" data-tip="Pedersen · 726 B"></span>
+        <span class="b-bp" data-tip="Bulletproofs++ · 688 B"></span>
+        <span class="b-car" data-tip="carry · 1,045 B"></span>
+        <span class="b-lnk" data-tip="linking σ · 2,178 B"></span>
+      </div>
+      <ul class="parts">
+        <li>
+          <span class="sw sw-env" aria-hidden="true"></span>
+          <div class="nm">Envelope
+            <span>Magic <code>ve-capsule.cap.v1</code>, version byte, and the commitment
+              <code>C&nbsp;=&nbsp;m·G</code> (here <code>M₁</code>) — the public claim the rest of
+              the proof is about.</span>
+          </div>
+          <div class="sz">51 B<small>18 + 33</small></div>
+        </li>
+        <li>
+          <span class="sw sw-elg" aria-hidden="true"></span>
+          <div class="nm">Segmented EC-ElGamal
+            <span>Eleven limb ciphertexts <code>(E<sub>k</sub>,&nbsp;D<sub>k</sub>)</code>.
+              This is the only part recovery needs to open — the rest is for auditors.</span>
+          </div>
+          <div class="sz">726 B<small>22 × 33</small></div>
+        </li>
+        <li>
+          <span class="sw sw-com" aria-hidden="true"></span>
+          <div class="nm">Pedersen limb commitments
+            <span>Value and complement commitments per limb
+              (<code>Com<sub>k</sub></code>, <code>Com̄<sub>k</sub></code>) — the range statement’s
+              public inputs.</span>
+          </div>
+          <div class="sz">726 B<small>22 × 33</small></div>
+        </li>
+        <li>
+          <span class="sw sw-bp" aria-hidden="true"></span>
+          <div class="nm">Bulletproofs++
+            <span>One aggregated reciprocal range proof over every limb and carry bit:
+              four commitments, six fold rounds, five residual scalars. Logarithmic in the
+              statement — not one proof per limb.</span>
+          </div>
+          <div class="sz">688 B<small>16×33 + 5×32</small></div>
+        </li>
+        <li>
+          <span class="sw sw-car" aria-hidden="true"></span>
+          <div class="nm">Carry chain
+            <span>Proves the limb decomposition is exact integer arithmetic
+              <code>m&nbsp;+&nbsp;m̄&nbsp;=&nbsp;n&nbsp;−&nbsp;1</code>, so a verifying capsule is a
+              decryptable one.</span>
+          </div>
+          <div class="sz">1,045 B<small>21×33 + 11×32</small></div>
+        </li>
+        <li>
+          <span class="sw sw-lnk" aria-hidden="true"></span>
+          <div class="nm">Linking sigma
+            <span>Binds the ElGamal limbs, the Pedersen commitments, and
+              <code>C</code> under one Fiat–Shamir challenge — so the range proof is about
+              the same scalar the ciphertext encrypts.</span>
+          </div>
+          <div class="sz">2,178 B<small>34×33 + 33×32</small></div>
+        </li>
+      </ul>
+      <p class="keep"><b>After verify, most of this can leave.</b> Strip drops everything but the
+        envelope and ElGamal limbs → <b>778-byte</b> opening core per piece. Or leave the cores
+        behind and keep a <b>65-byte</b> recovery hint per piece. The proofs are for the group at
+        setup; proof-stripped recovery needs the ciphertexts, hint recovery needs the separately
+        sealed shadows, and both re-anchor on certified <code>M</code>.</p>
+    </div>
+    </div>
   </div>
 </div></div></section>
 
 <section id="compact"><div class="wrap"><div class="sec">
   <div class="k-label">Compact</div>
   <div>
-    <h2>Keep the recovery payload small.</h2>
-    <p>If a scalar is stored as additive pieces, seal each piece and bundle the capsules into a
-      <em>Case</em>. One check, <code>Σ Mⱼ == M</code>, proves the pieces add up to the expected public
-      key. For recovery, each producer also emits a 65-byte hint. The hints form a compact recovery
-      payload. If you need interpolation weights, apply them before sealing.</p>
+    <h2>Proof for auditors. Recovery stays small.</h2>
+    <p>When a scalar is already additive pieces — the natural shape for many threshold and MPC
+      setups — seal each piece and bundle the capsules into a <em>Case</em>. One check,
+      <code>Σ Mⱼ == M</code>, proves the pieces add up to the expected public key. Beside each
+      capsule, a producer also seals a 65-byte recovery hint: an ECDH-openable shadow of one
+      contribution, with no proof attached. Gather the hints into one recipient-only payload and
+      leave the multi-kilobyte proofs behind. If you need interpolation weights, apply them before
+      sealing.</p>
     <div class="stat">
       <span class="from">≈5.4 KB / proof</span>
       <span class="arrow">→</span>
       <span class="glyph" aria-hidden="true"></span>
       <span class="big">65 <span>bytes a piece</span></span>
-      <span class="cap"><b>Recipient-only</b>: one ECDH, one hash, and one subtraction per piece.
-        The recovered sum must match the expected public key.</span>
+      <span class="cap"><b>Recipient-only:</b> one ECDH, one hash, and one subtraction per piece.
+        Recovery re-anchors on the certified target <code>M</code> — a tampered payload yields a
+        wrong scalar that fails closed, not a wrong secret that looks right.</span>
     </div>
 <pre><span class="k">let</span> rctx = <span class="t">RecoveryContext</span> {
     certified_target: &amp;expected_public_key,
@@ -326,36 +589,56 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 <section id="curve"><div class="wrap"><div class="sec">
   <div class="k-label">One curve</div>
   <div>
-    <h2>Native to secp256k1.</h2>
-    <p>The recipient, gates, recovered secret, and quorum signature all live on secp256k1. No class
-      group, pairing curve, or RSA modulus. It reuses the keys and signers already used by Bitcoin,
-      FROST, and Taproot systems.</p>
+    <h2>The curve you already speak.</h2>
+    <p>Recipient keys, gates, recovered secrets, and quorum signatures all live on secp256k1. No
+      class group, no pairing curve, no RSA modulus. That is a practical choice as much as a
+      cryptographic one: Bitcoin, FROST, and Taproot systems already hold these keys and signers, so
+      a gated recovery can be authorized with an ordinary secp256k1 signature instead of standing up
+      a second algebraic setting just for the recovery path.</p>
+    <p class="muted">The proof says a capsule targets the supplied recipient and gate keys; it does
+      not say those keys are enrolled or policy-authorized. The crate rejects identity,
+      publicly-enumerable, and bounded-relation key inputs, but possession and enrollment binding
+      remain integration obligations.</p>
   </div>
 </div></div></section>
 
 <section id="not-just-bulletproofs"><div class="wrap"><div class="sec">
-  <div class="k-label">Why not just BP++?</div>
+  <div class="k-label">Building on others</div>
   <div>
-    <h2>Bulletproofs are only one part.</h2>
-    <p>A Bulletproof can prove committed numbers are in range. It does not define who can open the
-      ciphertext, how recovery is checked, how approvers contribute, or how a large proof becomes a
-      compact recovery payload.</p>
-    <p class="muted">ve-capsule uses Bulletproofs++ for the range proof. Around it, the crate provides
-      encryption, context binding, recipient opening, consent gates, quorum signatures for stripped
-      cores, Cases for additive pieces, and recovery hints.</p>
+    <h2>BP++ for range. The crate for the rest.</h2>
+    <p>A range proof can show committed numbers sit in a window. It does not decide who can open a
+      ciphertext, how recovery re-checks itself, how approvers contribute without becoming oracles,
+      or how a multi-kilobyte proof becomes a small cold-storage payload. Those are the seams
+      applications actually need.</p>
+    <p class="muted">ve-capsule sits in the Camenisch–Shoup verifiable-encryption tradition, adapted
+      to segmented EC-ElGamal on native secp256k1. The range core is the reciprocal argument of
+      <a href="https://eprint.iacr.org/2022/510">Eagen, Kanjalkar, Ruffing, and Nick</a> (EUROCRYPT
+      2024), implemented from the paper with corrections from
+      <a href="https://github.com/cypherstack/bppp-review">Cypher Stack's review</a>. Around that:
+      context binding, recipient opening, consent gates, quorum signatures for stripped cores, Cases
+      for additive pieces, and recovery hints. The proof algebra stays crate-private so callers
+      cannot reach past the consent-gated surface.</p>
   </div>
 </div></div></section>
 
 <section id="hood"><div class="wrap"><div class="sec">
   <div class="k-label">Under the hood</div>
   <div>
-    <h2>Segmented EC-ElGamal, one transcript.</h2>
+    <h2>Segmented EC-ElGamal.</h2>
     <p class="muted">The scalar is encrypted in small segments. One aggregated
-      <strong>Bulletproofs++</strong> proof covers the segments and carries, with a linking sigma and
-      batched DLEQ on the same Fiat-Shamir transcript. Verification is a handful of multiscalar
-      equations, and there is no trusted setup. Each capsule binds to its keys and context. Secrets
-      zeroize on drop. The proof algebra stays crate-private. Sealing and unsealing are not
-      constant-time; run them where the secret already lives.</p>
+      <strong>Bulletproofs++</strong> argument covers every segment and carry at once — logarithmic
+      in the statement, not linear — with a linking sigma tying ciphertexts to the committed key.
+      The seal proof is non-interactive on one Fiat–Shamir transcript. Each authorizer
+      <code>Partial</code> carries its own non-interactive DLEQ transcript (separate from the seal
+      proof). The proven range is exactly the decryption search window (zero slack), so a capsule
+      that verifies is a capsule that decrypts. Generators are nothing-up-my-sleeve points each party
+      re-derives locally; there is no trusted setup. Verification is mostly multiscalar equations
+      plus canonical decode and degenerate-key/mask screens. Secrets zeroize on drop. Sealing and
+      unsealing are not constant-time — run them where the secret already lives; verification only
+      needs public data.</p>
+    <p class="muted">The claim is knowledge-sound binding and zero-knowledge in the random-oracle
+      model, with secrecy only beyond the public commitment <code>C = m·G</code>. Simulation-sound
+      extractability and UC composition are not claimed.</p>
     <p class="muted">The construction and security argument are in
       <a href="https://github.com/Jud/ve-capsule/blob/main/docs/ec-segve-soundness.md">the specification →</a></p>
   </div>
