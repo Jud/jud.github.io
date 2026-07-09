@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><rect x="10" y="25" width="52" height="22" rx="11" fill="%23566879"/><rect x="35" y="25" width="2" height="22" fill="%23f8f8f5"/></svg>'>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><rect x="4.5" y="11" width="23" height="10" rx="5" stroke="%23566879" stroke-width="1.6"/><path d="M12.5 11v10M19.5 11v10" stroke="%23566879" stroke-width="1.2" opacity=".55"/><circle cx="16" cy="16" r="1.7" fill="%23566879"/><path d="M7.2 8.2a11.2 11.2 0 0 1 17.6 0" stroke="%23566879" stroke-width="1.35" stroke-linecap="round" opacity=".85"/></svg>'>
 <style>
   :root{
     --bg:#f8f8f5; --panel:#fdfdfb; --ink:#191a1c; --soft:#666a6e; --faint:#9a9d9c;
@@ -47,9 +47,9 @@
   /* nav */
   nav{position:sticky;top:0;z-index:10;backdrop-filter:saturate(1.1) blur(8px);
     background:color-mix(in srgb,var(--bg) 86%,transparent);border-bottom:1px solid var(--line)}
-  nav .wrap{display:flex;align-items:center;gap:.55rem;height:3.4rem}
-  nav .pill-mk{width:1.25rem;height:.62rem;border-radius:.31rem;background:var(--wax);position:relative;flex:none}
-  nav .pill-mk::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1.5px;background:var(--bg)}
+  nav .wrap{display:flex;align-items:center;gap:.6rem;height:3.4rem}
+  nav .mark{width:1.45rem;height:1.45rem;flex:none;color:var(--wax);display:block}
+  nav .mark svg{display:block;width:100%;height:100%}
   nav .name{font-weight:600;letter-spacing:-.01em}
   nav .links{margin-left:auto;display:flex;gap:1.4rem;font-family:var(--mono);font-size:.78rem}
   nav .links a{color:var(--soft);text-decoration:none}
@@ -172,8 +172,8 @@
   .stat .from{font-family:var(--mono);font-size:.95rem;color:var(--faint);
     text-decoration:line-through;text-decoration-thickness:1px}
   .stat .arrow{color:var(--faint)}
-  .stat .glyph{width:30px;height:16px;border-radius:8px;background:var(--wax);position:relative;flex:none}
-  .stat .glyph::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1.5px;background:var(--panel)}
+  .stat .glyph{width:1.55rem;height:1.55rem;color:var(--wax);flex:none}
+  .stat .glyph svg{display:block;width:100%;height:100%}
   .stat .big{font-family:var(--serif);font-weight:600;font-size:2.9rem;letter-spacing:-.01em;line-height:1}
   .stat .big span{font-size:1rem;color:var(--soft);font-weight:400;letter-spacing:0;margin-left:.2rem}
   .stat .cap{flex-basis:100%;font-size:.92rem;color:var(--soft);margin:.4rem 0 0}
@@ -302,7 +302,18 @@
 <div class="banner" role="note"><b>research toy</b>: experimental &amp; unaudited. don't protect real keys with it yet.</div>
 
 <nav><div class="wrap">
-  <span class="pill-mk" aria-hidden="true"></span>
+  <span class="mark" aria-hidden="true">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- outer verify arc: public check without opening -->
+      <path d="M7.2 8.2a11.2 11.2 0 0 1 17.6 0" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" opacity=".85"/>
+      <!-- capsule hull -->
+      <rect x="4.5" y="11" width="23" height="10" rx="5" stroke="currentColor" stroke-width="1.6"/>
+      <!-- limb seams (segmented seal) -->
+      <path d="M12.5 11v10M19.5 11v10" stroke="currentColor" stroke-width="1.2" opacity=".5"/>
+      <!-- committed core -->
+      <circle cx="16" cy="16" r="1.65" fill="currentColor"/>
+    </svg>
+  </span>
   <span class="name">ve-capsule</span>
   <span class="links">
     <a href="#capabilities" class="opt">where</a>
@@ -591,7 +602,14 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
     <div class="stat">
       <span class="from">≈5.4 KB / proof</span>
       <span class="arrow">→</span>
-      <span class="glyph" aria-hidden="true"></span>
+      <span class="glyph" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7.2 8.2a11.2 11.2 0 0 1 17.6 0" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" opacity=".85"/>
+          <rect x="4.5" y="11" width="23" height="10" rx="5" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M12.5 11v10M19.5 11v10" stroke="currentColor" stroke-width="1.2" opacity=".5"/>
+          <circle cx="16" cy="16" r="1.65" fill="currentColor"/>
+        </svg>
+      </span>
       <span class="big">65 <span>bytes a piece</span></span>
       <span class="cap"><b>Recipient-only:</b> one ECDH, one hash, and one subtraction per piece.
         Recovery re-anchors on the certified target <code>M</code> — a tampered payload yields a
