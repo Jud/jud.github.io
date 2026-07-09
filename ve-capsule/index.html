@@ -578,10 +578,10 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
         </li>
       </ul>
       <p class="keep"><b>After verify, most of this can leave.</b> Strip drops everything but the
-        core envelope and ElGamal limbs → <b>778-byte</b> opening core per piece. Or leave the cores
-        behind and keep a <b>65-byte</b> recovery hint per piece. The proofs are for the group at
-        setup; proof-stripped recovery needs the ciphertexts, hint recovery needs the separately
-        sealed shadows, and both re-anchor on certified <code>M</code>.</p>
+        core envelope and ElGamal limbs → <b>778-byte</b> opening core per piece: the same
+        ciphertexts the group verified, and the only compact form that keeps gates. Beside it, a
+        separately sealed <b>65-byte</b> recovery hint per piece opens with almost no computation
+        at all. Both re-anchor on certified <code>M</code>.</p>
     </div>
     </div>
   </div>
@@ -593,19 +593,23 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
     <h2>Proof for auditors. Recovery stays small.</h2>
     <p>When a scalar is already additive pieces — the natural shape for many threshold and MPC
       setups — seal each piece and bundle the capsules into a <em>Case</em>. One check,
-      <code>Σ Mⱼ == M</code>, proves the pieces add up to the expected public key. Beside each
-      capsule, a producer also seals a 65-byte recovery hint: an ECDH-openable shadow of one
-      contribution, with no proof attached. Gather the hints into one recipient-only payload and
-      leave the multi-kilobyte proofs behind. If you need interpolation weights, apply them before
-      sealing.</p>
+      <code>Σ Mⱼ == M</code>, proves the pieces add up to the expected public key. After that
+      audit, the stripped core is the default compact form: the verified ciphertexts themselves,
+      gates intact. The recovery hint exists for a different opener entirely — hardware with just
+      enough silicon to hold a key and do one ECDH, nowhere near a bounded-dlog search. A hint is
+      a 65-byte ECDH-openable shadow of one contribution, sealed beside the capsule with no proof
+      attached; gathered into one recipient-only payload, the multi-kilobyte proofs stay behind.
+      If you need interpolation weights, apply them before sealing.</p>
     <div class="stat">
       <span class="from">≈5.4 KB / proof</span>
       <span class="arrow">→</span>
       <span class="glyph" aria-hidden="true"></span>
       <span class="big">65 <span>bytes a piece</span></span>
-      <span class="cap"><b>Recipient-only:</b> one ECDH, one hash, and one subtraction per piece.
-        Recovery re-anchors on the certified target <code>M</code> — a tampered payload yields a
-        wrong scalar that fails closed, not a wrong secret that looks right.</span>
+      <span class="cap"><b>Recipient-only:</b> one ECDH, one hash, and one subtraction per piece —
+        no proof code in the opener. The proof never covers a hint; recovery re-anchors on the
+        certified target <code>M</code>, so a bad payload fails closed — it can refuse to yield
+        the secret, never yield a wrong one that looks right. Keep the cores when you want the
+        audited fallback.</span>
     </div>
 <pre><span class="k">let</span> rctx = <span class="t">RecoveryContext</span> {
     certified_target: &amp;expected_public_key,
