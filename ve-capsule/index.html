@@ -61,15 +61,35 @@
   .eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.15em;text-transform:uppercase;
     color:var(--soft);margin-bottom:2rem}
   h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.1rem,10.5vw,7rem);
-    line-height:1.04;letter-spacing:-.01em;margin:0;font-feature-settings:"liga","dlig";
+    line-height:1.04;letter-spacing:-.01em;margin:0;color:var(--ink);
+    font-feature-settings:"liga","dlig";
     display:grid;grid-template-columns:max-content max-content;column-gap:.27em;justify-content:start}
   h1 .hl{display:block;white-space:nowrap}
   h1 .hl:nth-child(odd){text-align:right}
   h1 em{font-weight:400;letter-spacing:0}
-  .lede{font-size:1.18rem;line-height:1.55;color:var(--soft);max-width:40rem;margin:2.2rem 0 0}
+  .lede{max-width:36rem;margin:2.2rem 0 0}
+  .lede p{font-size:1.18rem;line-height:1.55;color:var(--soft);margin:0 0 .85rem}
+  .lede p:last-child{margin-bottom:0}
+  .lede p.hook{color:var(--ink);font-size:1.22rem;line-height:1.45;font-weight:500}
   .lede b{color:var(--ink);font-weight:600}
-  .facts{font-family:var(--mono);font-size:.76rem;color:var(--faint);margin-top:2.4rem;letter-spacing:.02em}
-  @media (max-width:640px){header{padding:3.6rem 0 3rem}.lede{font-size:1.05rem}}
+  .lede code{font-size:.88em}
+  .facts{font-family:var(--mono);font-size:.76rem;color:var(--faint);margin-top:2.4rem;letter-spacing:.02em;
+    line-height:1.55}
+  @media (max-width:640px){
+    header{padding:2.8rem 0 2.6rem}
+    .eyebrow{margin-bottom:1.25rem;font-size:.68rem;letter-spacing:.12em;line-height:1.4;
+      max-width:18rem}
+    h1{display:block;font-size:clamp(2.55rem,12.5vw,3.4rem);font-weight:600;
+      line-height:1.08;letter-spacing:-.02em;max-width:11ch}
+    h1 .hl{display:inline;white-space:normal}
+    h1 .hl:nth-child(odd){text-align:inherit}
+    /* two visual lines: "Recovery shares." then "Proven together." */
+    h1 .hl:nth-child(2)::after{content:"\A";white-space:pre}
+    .lede{margin-top:1.5rem}
+    .lede p{font-size:1.02rem;line-height:1.5;margin:0 0 .75rem}
+    .lede p.hook{font-size:1.08rem;line-height:1.4;margin-bottom:.9rem}
+    .facts{margin-top:1.6rem;font-size:.7rem;max-width:22rem}
+  }
 
   @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
   .hl,.lede,.facts,.rail{opacity:0;animation:rise .7s cubic-bezier(.2,.7,.3,1) forwards}
@@ -255,10 +275,13 @@
     .zoom{grid-template-columns:1fr auto 1fr}
   }
   @media (max-width:560px){
-    h2{white-space:normal}
+    h2{white-space:normal;font-size:1.55rem;line-height:1.2}
+    section{padding:3.2rem 0}
+    .wrap{padding:0 1.25rem}
     .bytebar{height:2rem}
     .bytebar span[data-tip]::after{display:none}
     .parts li{grid-template-columns:0.7rem minmax(0,1fr) auto;gap:.55rem .7rem}
+    .uses li{grid-template-columns:1fr;gap:.2rem;padding:.95rem 0}
   }
 
   footer{border-top:1px solid var(--line);padding:2.4rem 0 5.5rem}
@@ -299,13 +322,15 @@
     <span class="hl">Recovery</span><span class="hl">shares.</span>
     <span class="hl">Proven</span><span class="hl">together.</span>
   </h1>
-  <p class="lede">When several parties or devices each seal a piece of a key, everyone has the same
-    problem: ciphertext alone is a promise, and hoping the others sealed the right thing is not a
-    security model. <b>ve-capsule</b> attaches a public proof to each seal. Any participant can check
-    that another’s capsule encrypts the scalar behind the claimed public share <code>M = m·G</code> —
-    without opening it, without the recipient being online, and without learning anything beyond that
-    already-public discrete-log instance. Lying (or honest mistakes) fails at setup, in front of
-    everyone who has an interest in the outcome.</p>
+  <div class="lede">
+    <p class="hook">Ciphertext alone is a promise. When several parties each seal a piece of a key,
+      hoping the others sealed the right thing is not a security model.</p>
+    <p><b>ve-capsule</b> attaches a public proof to each seal. Anyone can check another’s capsule
+      encrypts the scalar behind the claimed share <code>M&nbsp;=&nbsp;m·G</code> — without opening
+      it, and without the recipient online.</p>
+    <p>Nothing leaks beyond that already-public discrete-log instance. Lying (or honest mistakes)
+      fails at setup, in front of everyone with skin in the game.</p>
+  </div>
   <div class="facts">secp256k1 · segmented EC-ElGamal · Bulletproofs++ · compact recovery payloads · no unsafe</div>
 
   <div class="rail" aria-label="A recovery artifact travels from the sealer, past other participants who check it without opening it, to the recovery device that opens it.">
