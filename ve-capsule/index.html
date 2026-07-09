@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><rect x="10" y="25" width="52" height="22" rx="11" fill="%23566879"/><rect x="35" y="25" width="2" height="22" fill="%23f8f8f5"/></svg>'>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><rect x="10" y="25" width="52" height="22" rx="11" fill="%23ffffff" stroke="%23191a1c" stroke-width="1.5"/><rect x="35" y="25" width="2" height="22" fill="%23191a1c"/></svg>'>
 <style>
   :root{
     --bg:#f8f8f5; --panel:#fdfdfb; --ink:#191a1c; --soft:#666a6e; --faint:#9a9d9c;
@@ -47,10 +47,12 @@
   /* nav */
   nav{position:sticky;top:0;z-index:10;backdrop-filter:saturate(1.1) blur(8px);
     background:color-mix(in srgb,var(--bg) 86%,transparent);border-bottom:1px solid var(--line)}
-  nav .wrap{display:flex;align-items:center;gap:.6rem;height:3.4rem}
-  nav .pill-mk{width:1.25rem;height:.62rem;border-radius:.31rem;background:var(--wax);position:relative;flex:none}
-  nav .pill-mk::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1.5px;background:var(--bg)}
-  nav .name{font-weight:600;letter-spacing:-.01em}
+  nav .wrap{display:flex;align-items:center;gap:.55rem;height:3.4rem}
+  nav .pill-mk{width:1.25rem;height:.62rem;border-radius:.31rem;background:#fff;position:relative;
+    flex:none;align-self:center;box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 14%,transparent)}
+  nav .pill-mk::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1.5px;
+    background:#191a1c;transform:translateX(-50%)}
+  nav .name{font-weight:600;letter-spacing:-.01em;line-height:1;display:flex;align-items:center}
   nav .links{margin-left:auto;display:flex;gap:1.4rem;font-family:var(--mono);font-size:.78rem}
   nav .links a{color:var(--soft);text-decoration:none}
   nav .links a:hover{color:var(--wax)}
@@ -172,8 +174,10 @@
   .stat .from{font-family:var(--mono);font-size:.95rem;color:var(--faint);
     text-decoration:line-through;text-decoration-thickness:1px}
   .stat .arrow{color:var(--faint)}
-  .stat .glyph{width:30px;height:16px;border-radius:8px;background:var(--wax);position:relative;flex:none}
-  .stat .glyph::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1.5px;background:var(--panel)}
+  .stat .glyph{width:30px;height:16px;border-radius:8px;background:#fff;position:relative;flex:none;
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 14%,transparent)}
+  .stat .glyph::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1.5px;
+    background:#191a1c;transform:translateX(-50%)}
   .stat .big{font-family:var(--serif);font-weight:600;font-size:2.9rem;letter-spacing:-.01em;line-height:1}
   .stat .big span{font-size:1rem;color:var(--soft);font-weight:400;letter-spacing:0;margin-left:.2rem}
   .stat .cap{flex-basis:100%;font-size:.92rem;color:var(--soft);margin:.4rem 0 0}
