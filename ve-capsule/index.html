@@ -8,10 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="icon" href="mark-light.png" type="image/png" media="(prefers-color-scheme: light)">
-<link rel="icon" href="mark-dark.png" type="image/png" media="(prefers-color-scheme: dark)">
-<link rel="icon" href="mark-dark.png" type="image/png">
-<link rel="apple-touch-icon" href="mark-dark.png">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><rect x="10" y="25" width="52" height="22" rx="11" fill="%23566879"/><rect x="35" y="25" width="2" height="22" fill="%23f8f8f5"/></svg>'>
 <style>
   :root{
     --bg:#f8f8f5; --panel:#fdfdfb; --ink:#191a1c; --soft:#666a6e; --faint:#9a9d9c;
@@ -51,15 +48,8 @@
   nav{position:sticky;top:0;z-index:10;backdrop-filter:saturate(1.1) blur(8px);
     background:color-mix(in srgb,var(--bg) 86%,transparent);border-bottom:1px solid var(--line)}
   nav .wrap{display:flex;align-items:center;gap:.6rem;height:3.4rem}
-  nav .mark{width:2rem;height:2rem;flex:none;display:block;position:relative;
-    background:transparent}
-  nav .mark img{display:block;width:100%;height:100%;object-fit:contain}
-  /* dark-line art on light page; light-line art on dark page */
-  nav .mark .mk-dark{display:none}
-  @media (prefers-color-scheme:dark){
-    nav .mark .mk-light{display:none}
-    nav .mark .mk-dark{display:block}
-  }
+  nav .pill-mk{width:1.25rem;height:.62rem;border-radius:.31rem;background:var(--wax);position:relative;flex:none}
+  nav .pill-mk::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1.5px;background:var(--bg)}
   nav .name{font-weight:600;letter-spacing:-.01em}
   nav .links{margin-left:auto;display:flex;gap:1.4rem;font-family:var(--mono);font-size:.78rem}
   nav .links a{color:var(--soft);text-decoration:none}
@@ -182,13 +172,8 @@
   .stat .from{font-family:var(--mono);font-size:.95rem;color:var(--faint);
     text-decoration:line-through;text-decoration-thickness:1px}
   .stat .arrow{color:var(--faint)}
-  .stat .glyph{width:2.25rem;height:2.25rem;flex:none;background:transparent;position:relative}
-  .stat .glyph img{display:block;width:100%;height:100%;object-fit:contain}
-  .stat .glyph .mk-dark{display:none}
-  @media (prefers-color-scheme:dark){
-    .stat .glyph .mk-light{display:none}
-    .stat .glyph .mk-dark{display:block}
-  }
+  .stat .glyph{width:30px;height:16px;border-radius:8px;background:var(--wax);position:relative;flex:none}
+  .stat .glyph::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1.5px;background:var(--panel)}
   .stat .big{font-family:var(--serif);font-weight:600;font-size:2.9rem;letter-spacing:-.01em;line-height:1}
   .stat .big span{font-size:1rem;color:var(--soft);font-weight:400;letter-spacing:0;margin-left:.2rem}
   .stat .cap{flex-basis:100%;font-size:.92rem;color:var(--soft);margin:.4rem 0 0}
@@ -317,10 +302,7 @@
 <div class="banner" role="note"><b>research toy</b>: experimental &amp; unaudited. don't protect real keys with it yet.</div>
 
 <nav><div class="wrap">
-  <span class="mark" aria-hidden="true" title="ve-capsule">
-    <img class="mk-light" src="mark-light.png" width="32" height="32" alt="">
-    <img class="mk-dark" src="mark-dark.png" width="32" height="32" alt="">
-  </span>
+  <span class="pill-mk" aria-hidden="true"></span>
   <span class="name">ve-capsule</span>
   <span class="links">
     <a href="#capabilities" class="opt">where</a>
@@ -609,10 +591,7 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
     <div class="stat">
       <span class="from">≈5.4 KB / proof</span>
       <span class="arrow">→</span>
-      <span class="glyph" aria-hidden="true">
-        <img class="mk-light" src="mark-light.png" width="32" height="32" alt="">
-        <img class="mk-dark" src="mark-dark.png" width="32" height="32" alt="">
-      </span>
+      <span class="glyph" aria-hidden="true"></span>
       <span class="big">65 <span>bytes a piece</span></span>
       <span class="cap"><b>Recipient-only:</b> one ECDH, one hash, and one subtraction per piece.
         Recovery re-anchors on the certified target <code>M</code> — a tampered payload yields a
