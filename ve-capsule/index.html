@@ -305,6 +305,7 @@
   <span class="pill-mk" aria-hidden="true"></span>
   <span class="name">ve-capsule</span>
   <span class="links">
+    <a href="#capabilities" class="opt">where</a>
     <a href="#roles" class="opt">artifact</a>
     <a href="#gates" class="opt">gates</a>
     <a href="#anatomy" class="opt">anatomy</a>
@@ -356,6 +357,31 @@
   </div>
 </div></header>
 
+<section id="capabilities"><div class="wrap"><div class="sec">
+  <div class="k-label">Where it helps</div>
+  <div>
+    <h2>When more than one party cares.</h2>
+    <p>The pattern is multi-party: several devices or people each contribute sealed material, and
+      everyone who will live with the result needs to know the others did not seal garbage, withhold
+      a real share, or “helpfully” substitute a different key. Verifiable encryption makes that check
+      public and offline-friendly. Catching your own mistakes is a free side effect.</p>
+    <ul class="uses">
+      <li><span class="u">Threshold recovery</span>
+        <p class="d">Each participant seals their piece toward the same recipient. The group verifies
+        the Case so the pieces add up to the certified public key before anyone walks away.</p></li>
+      <li><span class="u">Offline recipient</span>
+        <p class="d">The recovery device does not need to be online for setup. Peers still confirm
+        every seal against the expected public shares before relying on the package.</p></li>
+      <li><span class="u">Consent-gated recovery</span>
+        <p class="d">Require one or more access keys (or a threshold key no single person holds) to
+        contribute before the recipient can open.</p></li>
+      <li><span class="u">Self-audit &amp; cold storage</span>
+        <p class="d">You can also re-verify your own backups without decrypting them, and after
+        group verification drop the multi-kilobyte proofs for a small recipient-only payload.</p></li>
+    </ul>
+  </div>
+</div></div></section>
+
 <section id="roles"><div class="wrap"><div class="sec">
   <div class="k-label">Artifact</div>
   <div>
@@ -391,31 +417,6 @@ capsule.verify_ungated(&amp;public_key, &amp;recipient, &amp;ctx)?;
 
     <p class="muted"><code>ctx</code> binds the capsule to your application transcript — package id,
       epoch, purpose — so the same bytes cannot be lifted and replayed somewhere else.</p>
-  </div>
-</div></div></section>
-
-<section id="capabilities"><div class="wrap"><div class="sec">
-  <div class="k-label">Where it helps</div>
-  <div>
-    <h2>When more than one party cares.</h2>
-    <p>The pattern is multi-party: several devices or people each contribute sealed material, and
-      everyone who will live with the result needs to know the others did not seal garbage, withhold
-      a real share, or “helpfully” substitute a different key. Verifiable encryption makes that check
-      public and offline-friendly. Catching your own mistakes is a free side effect.</p>
-    <ul class="uses">
-      <li><span class="u">Threshold recovery</span>
-        <p class="d">Each participant seals their piece toward the same recipient. The group verifies
-        the Case so the pieces add up to the certified public key before anyone walks away.</p></li>
-      <li><span class="u">Offline recipient</span>
-        <p class="d">The recovery device does not need to be online for setup. Peers still confirm
-        every seal against the expected public shares before relying on the package.</p></li>
-      <li><span class="u">Consent-gated recovery</span>
-        <p class="d">Require one or more access keys (or a threshold key no single person holds) to
-        contribute before the recipient can open.</p></li>
-      <li><span class="u">Self-audit &amp; cold storage</span>
-        <p class="d">You can also re-verify your own backups without decrypting them, and after
-        group verification drop the multi-kilobyte proofs for a small recipient-only payload.</p></li>
-    </ul>
   </div>
 </div></div></section>
 
