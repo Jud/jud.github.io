@@ -170,10 +170,10 @@ footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wr
     <div class="nav-links">
       <a href="#config">Config</a>
       <a href="#different">What's different</a>
-      <a href="https://github.com/Jud/smelt#readme">Docs</a>
+      <a href="https://github.com/smelt-org/smelt#readme">Docs</a>
       <a href="https://www.jud.me/">jud.me</a>
     </div>
-    <a class="pill pill-white" href="https://github.com/Jud/smelt">GitHub</a>
+    <a class="pill pill-white" href="https://github.com/smelt-org/smelt">GitHub</a>
   </div>
 </nav>
 
@@ -185,7 +185,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wr
     into sealed programs, verified bit-exact against the original model.
   </p>
   <div class="hero-ctas">
-    <a class="pill pill-white" href="https://github.com/Jud/smelt">View on GitHub</a>
+    <a class="pill pill-white" href="https://github.com/smelt-org/smelt">View on GitHub</a>
     <a class="pill pill-ghost" href="#config">See a model configured</a>
   </div>
   <p class="hero-note">Pure Swift 6 + Metal · one self-contained process · packages run offline, forever.</p>
@@ -194,7 +194,9 @@ footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wr
     <div class="term-body"><span class="t-p">$</span> smelt run qwen35-0.8b.smeltpkg --prompt <span class="t-s">"hello"</span>
 <span class="t-p">$</span> smelt run qwen3-tts-0.6b.smeltpkg --prompt <span class="t-s">"hello"</span> &gt; hello.pcm
 <span class="t-p">$</span> smelt run skintokens.smeltpkg --input giraffe.glb --output rigged.glb
-<span class="t-dim">  a chat model, a voice, and an auto-rigger — the same verb, the same runtime</span></div>
+<span class="t-p">$</span> smelt agent create triage --model qwen35-0.8b.smeltpkg --system <span class="t-s">"review this diff"</span>
+<span class="t-p">$</span> smelt agent run triage.agent <span class="t-s">"find the regression"</span>
+<span class="t-dim">  models, voices, systems, and agent policy — one compiler, one runtime</span></div>
   </div>
 </header>
 
@@ -221,7 +223,7 @@ footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wr
       <div class="split-panel">
         <h3>What the file declares</h3>
         <p>The graph — <span class="mono">glb.decode</span> through <span class="mono">sequence.generate</span> to <span class="mono">glb.encode</span> — and the flags on the command line above. <span class="mono">smelt build</span> compiles it with the pinned checkpoint into one sealed package; <span class="mono">smelt run</span> executes whatever graph a package declares.</p>
-        <p>The deterministic reference rig is byte-identical run over run, SHA-pinned in CI. <a href="https://github.com/Jud/smelt/blob/main/Sources/SmeltModels/SkinTokens.swift" style="color:var(--text)">Read the whole definition.</a></p>
+        <p>The deterministic reference rig is byte-identical run over run, SHA-pinned in CI. <a href="https://github.com/smelt-org/smelt/blob/main/Sources/SmeltModels/SkinTokens.swift" style="color:var(--text)">Read the whole definition.</a></p>
         <div class="metrics">
           <div class="metric"><b>1</b><span>Swift file defines the module</span></div>
           <div class="metric"><b>9</b><span>declared graph stages</span></div>
@@ -293,8 +295,8 @@ footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wr
 
 <footer>
   <div class="wrap">
-    <span>Smelt — Swift 6 · Metal · Qwen 3.5 · Gemma 4 · Qwen3-TTS · SkinTokens · Bonsai 27B · built on by <a href="https://github.com/instantagent/instantagent">Instant Agent</a></span>
-    <span><a href="https://github.com/Jud/smelt">GitHub</a> · <a href="https://www.jud.me">jud.me</a></span>
+    <span>Smelt — Swift 6 · Metal · Qwen 3.5 · Gemma 4 · Qwen3-TTS · SkinTokens · Bonsai 27B · agent workflows under <span class="mono">smelt agent</span></span>
+    <span><a href="https://github.com/smelt-org/smelt">GitHub</a> · <a href="https://www.jud.me">jud.me</a></span>
   </div>
 </footer>
 
