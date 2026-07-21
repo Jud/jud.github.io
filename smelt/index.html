@@ -47,10 +47,17 @@ a { color: inherit; }
 code, .mono { font-family: var(--mono); }
 
 /* nav */
-nav { border-bottom: 1px solid var(--border-soft); }
+nav {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(10, 10, 11, .82);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-soft);
+}
 .nav-inner { display: flex; align-items: center; min-height: 58px; gap: 28px; flex-wrap: wrap; padding: 10px 24px; }
-.brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 16px; text-decoration: none; letter-spacing: -0.01em; }
-.brand img { width: 22px; height: 22px; border-radius: 5px; }
+.brand { display: flex; align-items: center; font-weight: 600; font-size: 16px; text-decoration: none; letter-spacing: -0.01em; }
+.brand img { width: 22px; height: 22px; border-radius: 5px; margin-right: 9px; transition: opacity .25s ease, width .25s ease, margin-right .25s ease; }
+nav:not(.past-hero) .brand img { width: 0; margin-right: 0; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .brand img { transition: none; } }
 .nav-links { display: flex; gap: 22px; margin-left: auto; flex-wrap: wrap; row-gap: 8px; }
 .nav-links a { font-size: 13.5px; color: var(--muted); text-decoration: none; }
 .nav-links a:hover { color: var(--text); }
@@ -291,5 +298,16 @@ footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wr
   </div>
 </footer>
 
+<script>
+const heroMark = document.querySelector('.hero .mark');
+const navEl = document.querySelector('nav');
+if ('IntersectionObserver' in window && heroMark) {
+  new IntersectionObserver(([e]) => {
+    navEl.classList.toggle('past-hero', !e.isIntersecting);
+  }).observe(heroMark);
+} else {
+  navEl.classList.add('past-hero');
+}
+</script>
 </body>
 </html>
